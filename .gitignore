@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# IDE Generated Folders
+.vscode
+Build
+
+# Files to remove
+config.txt
+output.txt
+AutomationTools
+Datasets
