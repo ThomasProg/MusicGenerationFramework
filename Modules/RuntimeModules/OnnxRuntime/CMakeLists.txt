@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 
-project("fluidsynth")
+project("OnnxRuntime")
 
 include(FetchContent)
 
 function(download_file url)
 
-FetchContent_Declare(fluidsynth
+FetchContent_Declare(OnnxRuntime
     URL ${url}
     DOWNLOAD_NO_EXTRACT false
     TLS_VERIFY true
@@ -14,7 +14,7 @@ FetchContent_Declare(fluidsynth
     DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 
-FetchContent_Populate(fluidsynth)
+FetchContent_Populate(OnnxRuntime)
 
 endfunction(download_file)
 
@@ -24,8 +24,8 @@ endfunction(download_file)
 #   12794390cce7d0682ffc783c785e4282305684431b30b29ed75c224da24035b4
 # )
 
-message(STATUS "Downloading Fluidsynth Binaries...")
+message(STATUS "Downloading OnnxRuntime Binaries...")
 download_file(
-    https://github.com/FluidSynth/fluidsynth/releases/download/v2.3.4/fluidsynth-2.3.4-win10-x64.zip
+    https://www.nuget.org/api/v2/package/Microsoft.ML.OnnxRuntime.Gpu/1.16.1
 )
  
