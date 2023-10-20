@@ -3,4 +3,4 @@
 	url = git@github.com:ThomasProg/EasyMidiFileParserCpp.git
 [submodule "Modules/RuntimeModules/ModularMusicGenerationCore"]
 	path = Modules/RuntimeModules/ModularMusicGenerationCore
-	url = git@github.com:ThomasProg/EasyMidiFileParserCpp.git
+	url = git@github.com:ThomasProg/ModularMusicGenerationCore.git
