@@ -28,7 +28,7 @@ Before a Machine Learning model is used, input data has to be preprocesssed.
 - **Output Preprocessing Modules (OPM)**\
 After a Machine Learning model is used, output data has to be preprocesssed.
 
-## Creating my own runtime module
+## Creating my own Runtime Module
 
 Minimal specifications:
 - Create a directory inside this RuntimeModules folder.
