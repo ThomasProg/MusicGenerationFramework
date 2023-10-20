@@ -35,6 +35,9 @@
 .vscode
 Build
 
+# Prebuilt binaries Downloads folders 
+Downloads
+
 # Files to remove
 config.txt
 output.txt
