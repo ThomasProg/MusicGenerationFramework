@@ -1,6 +1,6 @@
 # Music Generation Framework
 
-## What is the goal of this project?
+## What is the goal of this framework?
 
 - Music generation
 - Good generation quality
@@ -23,7 +23,7 @@ Additionally, it can be streamed continuously, making it suitable for 24/7 playb
 
 ## Getting Started
 
-The project provides:
+This framework provides:
 
 [Dynamic Libraries](Modules/RuntimeModules/README.md):\
 Ready-to-use tools for your own programs.\
