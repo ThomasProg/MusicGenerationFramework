@@ -1,0 +1,6 @@
+[submodule "Modules/RuntimeModules/EasyMidiFileParserCpp"]
+	path = Modules/RuntimeModules/EasyMidiFileParserCpp
+	url = git@github.com:ThomasProg/EasyMidiFileParserCpp.git
+[submodule "Modules/RuntimeModules/ModularMusicGenerationCore"]
+	path = Modules/RuntimeModules/ModularMusicGenerationCore
+	url = git@github.com:ThomasProg/EasyMidiFileParserCpp.git
