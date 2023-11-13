@@ -18,12 +18,6 @@ FetchContent_Populate(fluidsynth)
 
 endfunction(download_file)
 
-# === example
-# download_file(
-#   https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg
-#   12794390cce7d0682ffc783c785e4282305684431b30b29ed75c224da24035b4
-# )
-
 message(STATUS "Downloading Fluidsynth Binaries...")
 download_file(
     https://github.com/FluidSynth/fluidsynth/releases/download/v2.3.4/fluidsynth-2.3.4-win10-x64.zip

@@ -18,12 +18,6 @@ FetchContent_Populate(OnnxRuntime)
 
 endfunction(download_file)
 
-# === example
-# download_file(
-#   https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg
-#   12794390cce7d0682ffc783c785e4282305684431b30b29ed75c224da24035b4
-# )
-
 message(STATUS "Downloading OnnxRuntime Binaries...")
 download_file(
     https://www.nuget.org/api/v2/package/Microsoft.ML.OnnxRuntime.Gpu/1.16.1
