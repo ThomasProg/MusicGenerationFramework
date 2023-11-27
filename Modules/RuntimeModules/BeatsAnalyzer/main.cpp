@@ -27,7 +27,7 @@ public:
         // if (key < 40)
         //     return;
 
-        uint32_t time = timePerTrack[currentTrackIndex] * (tempo / ticksPerQuarterNote) / 1000;
+        uint32_t time = timePerTrack[currentTrackIndex];// *(tempo / ticksPerQuarterNote) / 1000;
 
         if (time - lastTime < 50)
         {
@@ -234,3 +234,4 @@ int main()
         std::cout << e.what() << std::endl;
     }
 }
+

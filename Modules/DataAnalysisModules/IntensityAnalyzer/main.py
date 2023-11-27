@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 # my_library = cdll.LoadLibrary('./my_library_wrapper.so')
-my_library = cdll.LoadLibrary('C:/Users/thoma/Documents/Projects/ModularMusicGenerationModules/Build/Debug/Modules/ParseMidiFileIntensity/Debug/ParseMidiFileIntensity.dll')
+my_library = cdll.LoadLibrary('C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Build/Modules/RuntimeModules/ParseMidiFileIntensity/Debug/ParseMidiFileIntensity.dll')
 
 # Define a structure to match the C struct
 class Intensities(ctypes.Structure):
@@ -25,7 +25,7 @@ my_library.getTrackTimings.argtypes = [Intensities, ctypes.c_int]
 my_library.getTrackTimings.restype = Vector
 
 # Define the path to the folder
-folder_path = "C:/Users/thoma/Downloads/archive/"
+folder_path = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-full"
 
 # intensities = None
 
@@ -36,37 +36,41 @@ for dirpath, dirnames, filenames in os.walk(folder_path):
         # Check if the item is a file (not a subdirectory)
         if os.path.splitext(filename)[1] == ".mid":
             print(filename.encode("utf-8"))
-            parsedIntensities = my_library.parseIntensities(os.path.join(dirpath, filename).encode("utf-8"))
-            for trackIndex in range(0, parsedIntensities.nbTracks):
-                timings = my_library.getTrackTimings(parsedIntensities, trackIndex)
-                velocities = my_library.getTrackVelocities(parsedIntensities, trackIndex)
+            try:
+                parsedIntensities = my_library.parseIntensities(os.path.join(dirpath, filename).encode("utf-8"))
+                for trackIndex in range(0, parsedIntensities.nbTracks):
+                    timings = my_library.getTrackTimings(parsedIntensities, trackIndex)
+                    velocities = my_library.getTrackVelocities(parsedIntensities, trackIndex)
 
-                data = [velocities.data[i] for i in range(velocities.length)]
-                # data[:] = (value for value in data if value != 0)
-                # dates = [i for i in range(len(data))]
-                dates = [timings.data[i] for i in range(timings.length)]
+                    data = [velocities.data[i] for i in range(velocities.length)]
+                    # data[:] = (value for value in data if value != 0)
+                    # dates = [i for i in range(len(data))]
+                    dates = [timings.data[i] for i in range(timings.length)]
 
-                if (velocities.length == 0):
-                    continue
+                    if (velocities.length == 0):
+                        continue
 
-                vel1 = data[0]
-                shouldSkip = True
-                for d in data:
-                    if (d != vel1):
-                        shouldSkip = False
-                        break
+                    vel1 = data[0]
+                    shouldSkip = True
+                    for d in data:
+                        if (d != vel1):
+                            shouldSkip = False
+                            break
 
-                if (shouldSkip):
-                    continue
+                    if (shouldSkip):
+                        continue
 
-                plt.figure(figsize=(10, 5))  # Set the figure size (optional)
-                plt.plot(dates, data, marker='o')  # 'o' adds points at data
+                    plt.figure(figsize=(10, 5))  # Set the figure size (optional)
+                    plt.plot(dates, data, marker='o')  # 'o' adds points at data
 
-                plt.xlabel('Date')
-                plt.ylabel('Value')
-                plt.title(filename + " / Track : " + str(trackIndex))
+                    plt.xlabel('Date')
+                    plt.ylabel('Value')
+                    plt.title(filename + " / Track : " + str(trackIndex))
 
-            plt.show()
+                plt.show()
+            
+            except:
+                print("Couldn't parse file")
 
                 # if (intensities.length == 3):
                 #     found = True

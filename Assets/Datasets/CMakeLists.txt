@@ -7,6 +7,7 @@ function(download_dataset datasetName url)
 project("${datasetName}")
 
 message(STATUS "Downloading ${datasetName} Dataset...")
+Set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare("${datasetName}"
     URL ${url}
     DOWNLOAD_NO_EXTRACT false

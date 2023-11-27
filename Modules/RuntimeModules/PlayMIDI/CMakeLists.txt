@@ -4,8 +4,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # FILE(GLOB SOURCES Src/* Include/*)
-FILE(GLOB SOURCES ParseMidiFileIntensity.cpp ParseMidiFileIntensity.h)
-set(TargetName "ParseMidiFileIntensity")
+FILE(GLOB SOURCES *.cpp *.h)
+set(TargetName "PlayMIDI")
 project(${TargetName})
 
 # Create dynamic lib (.dll/.so)
@@ -31,12 +31,14 @@ add_custom_command(TARGET ${TargetName}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory 
   "${ModulesDirectory}/fluidsynth/Downloads/bin/" 
-  ${ParseMidiFileIntensity_BINARY_DIR}/$<CONFIG>/.
+  ${PlayMIDI_BINARY_DIR}/$<CONFIG>/.
 )
 
 add_custom_command(TARGET ${TargetName}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory 
   ${EasyMidiFileParserCpp_BINARY_DIR}/$<CONFIG>/.
-  ${ParseMidiFileIntensity_BINARY_DIR}/$<CONFIG>/.
+  ${PlayMIDI_BINARY_DIR}/$<CONFIG>/.
 )
+
+add_subdirectory(Standalone)
