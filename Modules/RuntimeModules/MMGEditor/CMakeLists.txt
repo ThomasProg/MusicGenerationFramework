@@ -36,6 +36,7 @@ target_include_directories(${TargetName} PUBLIC
     "${ModulesDirectory}/glfw/include"
     "${ModulesDirectory}/glfw/deps"
     "${ModulesDirectory}/imgui/imgui"
+    "${ModulesDirectory}/PortableFileDialogs"
 )
 
 add_custom_command(TARGET ${TargetName}

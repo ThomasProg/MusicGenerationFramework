@@ -6,6 +6,9 @@
 #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#include "portable-file-dialogs.h"
+
 // 
 //#include "linmath.h"
 // 
@@ -320,6 +323,19 @@ int main(int, char**)
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    std::string path = std::string(DATASETS_PATH);
+    for (char& c : path)
+    {
+        if (c == '/')
+        {
+            c = '\\';
+        }
+    }
+    auto selection = pfd::open_file("Select a file", path).result();
+
+    if (!selection.empty())
+        std::cout << "User selected file " << selection[0] << "\n";
 
     // Main loop
 #ifdef __EMSCRIPTEN__

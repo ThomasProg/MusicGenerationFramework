@@ -7,3 +7,6 @@
 [submodule "Modules/RuntimeModules/glfw"]
 	path = Modules/RuntimeModules/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "Modules/RuntimeModules/PortableFileDialogs"]
+	path = Modules/RuntimeModules/PortableFileDialogs
+	url = https://github.com/samhocevar/portable-file-dialogs.git
