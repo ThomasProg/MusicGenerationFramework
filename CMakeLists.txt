@@ -9,6 +9,7 @@ option(OUT_MUSICS_PATH "The folder in which the musics will be generated" ${CMAK
 # option(DATASETS_PATH "The folder containing the datasets" "${CMAKE_SOURCE_DIR}/Assets/Datasets")
 add_compile_definitions(OUT_MUSICS_PATH)
 add_compile_definitions(DATASETS_PATH="${CMAKE_SOURCE_DIR}/Assets/Datasets/")
+add_compile_definitions(ANALYSIS_MODULES_PATH="${CMAKE_SOURCE_DIR}/Modules/DataAnalysisModules/")
 
 if(BUILD_MODULES)
     add_subdirectory(Modules)

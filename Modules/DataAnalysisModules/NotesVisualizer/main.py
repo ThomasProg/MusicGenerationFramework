@@ -2,6 +2,7 @@ from ctypes import cdll
 import ctypes
 import os
 import matplotlib.pyplot as plt
+import sys
 
 # my_library = cdll.LoadLibrary('./my_library_wrapper.so')
 my_library = cdll.LoadLibrary('C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Build/Modules/RuntimeModules/PlayMIDI/Debug/PlayMIDI.dll')
@@ -55,15 +56,16 @@ my_library.CastToProgramChange.restype = ProgramChange
 
 # Define the path to the folder
 # folder_path = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-full"
-folder_path = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean"
+# folder_path = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean"
+folder_path = sys.argv[1]
 
 # Loop over all files in the folder
 # found = False
 r = 0
 for dirpath, dirnames, filenames in os.walk(folder_path):
     for filename in filenames:
-        if (filename != "I_Do.mid"):
-            continue
+        # if (filename != "I_Do.mid"):
+        #     continue
 
         # Check if the item is a file (not a subdirectory)
         if os.path.splitext(filename)[1] == ".mid":
