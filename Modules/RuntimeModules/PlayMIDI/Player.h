@@ -4,6 +4,7 @@
 #include <fluidsynth.h>
 #include <vector>
 #include <memory>
+#include <mutex>
 // .cpp
 #include <chrono>
 #include <thread>
@@ -22,6 +23,7 @@ public:
     double time = 0.f;
     double addedTime = 0.f;
 
+    std::atomic<bool> isPlaying;
     std::mutex m;
 
     uint32_t GetPlayerTime() const
@@ -65,6 +67,11 @@ public:
     {
         m.lock();
 
+        for (int i = 0; i < 16; i++)
+        {
+            fluid_synth_all_notes_off(synth, i);
+        }
+
         //time = newTime;
         addedTime = newTime - time;
 
@@ -79,6 +86,8 @@ public:
             while (trackIndices[track] < notesPerTrack[track].size())
             {
                 MIDIEvent* note = notesPerTrack[track][trackIndices[track]];
+
+                //note->Play();
 
                 if (note->start < timeInMs)
                 {
@@ -106,10 +115,11 @@ public:
 
     void Play()
     {
+        isPlaying = true;
         trackIndices.resize(GetNbTracks());
 
         std::chrono::time_point programBeginTime = std::chrono::high_resolution_clock::now();
-        while (1)
+        while (isPlaying.load())
         {
             m.lock();
 
