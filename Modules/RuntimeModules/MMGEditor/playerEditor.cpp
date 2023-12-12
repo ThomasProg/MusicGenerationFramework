@@ -60,17 +60,23 @@ void PlayerEditor::Render()
 
         if (!selection.empty())
         {
+            // Stop current playback
+            player.isPlaying = false;
+            if (music.joinable())
+            {
+                music.join();
+            }
+
             midiPath = selection[0];
             std::cout << "User selected file " << midiPath << "\n";
 
             ConvertingParser parser;
             parser.LoadFromFile(midiPath.c_str());
             player.notesPerTrack = std::move(parser.notesPerTrack);
-            music = std::async(std::launch::async, [this]
-            { 
+
+            music = std::thread([this](){
                 player.Play();
             });
-            //player.(midiPath.c_str());
         }
     }
 

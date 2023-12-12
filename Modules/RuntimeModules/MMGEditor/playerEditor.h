@@ -1,14 +1,15 @@
 #pragma once
 
 #include "Player.h"
-#include <future>
+#include <thread>
 
 class PlayerEditor
 {
 	Player player;
 	std::string sfPath;
 	std::string midiPath;
-	std::future<void> music;
+
+	std::thread music;
 
 public:
 	PlayerEditor();
