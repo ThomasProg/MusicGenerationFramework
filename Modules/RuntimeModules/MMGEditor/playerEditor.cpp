@@ -71,7 +71,7 @@ void PlayerEditor::Render()
             std::cout << "User selected file " << midiPath << "\n";
 
             ConvertingParser parser;
-            parser.LoadFromFile(midiPath.c_str());
+            parser.parser.LoadFromFile(midiPath.c_str());
             player.notesPerTrack = std::move(parser.notesPerTrack);
 
             music = std::thread([this](){

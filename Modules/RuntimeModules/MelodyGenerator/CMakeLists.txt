@@ -12,6 +12,17 @@ project(${TargetName})
 # Create library
 add_library(${TargetName} SHARED ${SOURCES})
 
+
+target_link_libraries(${TargetName} EasyMidiFileParserCpp)
+
 target_include_directories(${TargetName} PUBLIC 
     "${PROJECT_SOURCE_DIR}/Public/" 
+    "${ModulesDirectory}/EasyMidiFileParserCpp/Public"
+)
+
+add_custom_command(TARGET ${TargetName}
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory 
+  ${EasyMidiFileParserCpp_BINARY_DIR}/$<CONFIG>/.
+  ${MelodyGenerator_BINARY_DIR}/$<CONFIG>/.
 )

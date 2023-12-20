@@ -8,7 +8,6 @@
 
 - C callbacks
     - Overhead?
-    - 
 
 - Polling
     - Requires structs, so have to convert anyways

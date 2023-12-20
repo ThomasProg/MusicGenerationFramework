@@ -8,6 +8,8 @@
 #define EXAMPLELIBRARY_IMPORT
 #endif
 
+#include <vector>
+
 // EXAMPLELIBRARY_IMPORT void ExampleLibraryFunction();
 
 extern "C"
@@ -29,7 +31,8 @@ extern "C"
     using OnNotePlayedPtr = void(*)(const FOnNotePlayed&, UserDataPtr);
     using OnNoteStoppedPtr = void(*)(const FOnNoteStopped&, UserDataPtr);
 
-    __declspec(dllexport) MelodyGenerator* CreateMelodyGenerator();
+    // __declspec(dllexport) MelodyGenerator* CreateMelodyGenerator();
+    __declspec(dllexport) class MelodyGenerator_Impl1* CreateMelodyGeneratorImpl1();
     __declspec(dllexport) void DeleteMelodyGenerator(MelodyGenerator*);
 
     __declspec(dllexport) void SetOnNotePlayedCallback(MelodyGenerator* generator, OnNotePlayedPtr callback);
@@ -45,37 +48,8 @@ extern "C"
 
 
     __declspec(dllexport) void StartGeneration(MelodyGenerator* generator);
+    // __declspec(dllexport) void StartGenerationAsync(MelodyGenerator* generator);
 }
-
-// #include <vector>
-
-// template<typename T>
-// class CircularBuffer
-// {
-// public:
-//     T* buffer = nullptr;
-//     size_t start = 0;
-//     size_t end = 0;
-
-//     ~CircularBuffer()
-//     {
-//         if (buffer != nullptr)
-//         {
-//             delete buffer;
-//         }
-//     }
-
-//     virtual void Resize(size_t size)
-//     {
-//         buffer = new T[size];
-//     }
-
-//     T& operator[](size_t index)
-//     {
-//         return buffer[index % buffer.size()];
-//     }
-// };
-
 
 // class IVelocityGenerator
 // {
@@ -139,6 +113,7 @@ class MelodyGenerator
 {
 public:
     void* userData = nullptr;
+    std::vector<int32_t> buffer;
 
     OnNotePlayedPtr onNotePlayed;
     OnNoteStoppedPtr onNoteStopped;
@@ -156,12 +131,51 @@ public:
 public:
 
 
-    void OnStart()
+    virtual void OnStart()
     {
         FOnNotePlayed note;
         note.note = 60;
         note.velocity = 120;
         onNotePlayed(note, userData);
+        // onBufferGenerated([note], userData);
     }
 
+    virtual int32_t GetBufferSize() const = 0;
+
+    using TOnBufferGenerated = void(MelodyGenerator* generator);
+    TOnBufferGenerated* onBufferGenerated;
+
+    // virtual int32_t* GenerateNotes();
+    virtual ~MelodyGenerator() = default;
 };
+
+class MelodyGenerator_Impl1 : public MelodyGenerator
+{
+public:
+    int32_t nbBars = 4;
+    int32_t nbNotesPerBar = 4;
+
+    virtual ~MelodyGenerator_Impl1() = default;
+
+    virtual int32_t GetBufferSize() const override 
+    {
+        return nbNotesPerBar*nbBars;
+    }
+
+    virtual void OnStart() override
+    {
+        buffer.resize(GetBufferSize());
+
+        static constexpr int possibleNotes[] = {0,1,2,3,4,5,6};
+
+        int i = 0;
+        for (int32_t& note : buffer)
+        {
+            note = possibleNotes[i%(sizeof(possibleNotes) / sizeof(*possibleNotes))];
+            i++;
+        }
+
+        onBufferGenerated(this);
+    }
+};
+

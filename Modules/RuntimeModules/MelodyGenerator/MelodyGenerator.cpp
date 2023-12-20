@@ -1,9 +1,14 @@
 #include "MelodyGenerator.h"
 #include <iostream>
 
-MelodyGenerator* CreateMelodyGenerator()
+// MelodyGenerator* CreateMelodyGenerator()
+// {
+//     return new MelodyGenerator();
+// }
+
+MelodyGenerator_Impl1* CreateMelodyGeneratorImpl1()
 {
-    return new MelodyGenerator();
+    return new MelodyGenerator_Impl1();
 }
 
 void DeleteMelodyGenerator(MelodyGenerator* melodyGenerator)
@@ -30,3 +35,9 @@ void StartGeneration(MelodyGenerator* generator)
 {
     generator->OnStart();
 }
+
+
+
+
+
+

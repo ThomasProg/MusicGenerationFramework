@@ -45,7 +45,7 @@ Intensities parseIntensities(const char* filepath)
         file.read (memblock, size);
         file.close();
 
-        p.LoadFromBytes(memblock, size);
+        p.parser.LoadFromBytes(memblock, size);
 
         delete[] memblock;
     }
