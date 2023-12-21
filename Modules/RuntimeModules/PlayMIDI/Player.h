@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MIDIEvents.h"
+#include "MIDIMusic.h"
 #include <fluidsynth.h>
 #include <vector>
 #include <memory>
@@ -8,20 +8,30 @@
 // .cpp
 #include <chrono>
 #include <thread>
+#include <iostream>
 
-class MIDIPARSEREXPORT Player
+class MIDIPARSEREXPORT Player : public IMIDIEventReceiver
 {
 private:
+    using Super = IMIDIEventReceiver;
+
     fluid_settings_t* settings;
     fluid_synth_t* synth;
     fluid_audio_driver_t* adriver;
 
-    std::vector<int> trackIndices;
+    std::vector<uint32_t> trackIndices;
+    //std::vector<double> trackLastEventTime;
+    std::vector<double> trackLastEventTime;
 
 public:
-    std::vector<std::vector<MIDIEvent*>> notesPerTrack;
+    class MIDIMusic* music = nullptr;
+    // std::vector<std::vector<MIDIEvent*>> notesPerTrack;
     double time = 0.f;
     double addedTime = 0.f;
+
+    // only 3 bytes
+    // msPerQuarterNote;
+    uint32_t tempo = 500000; // 120 bpm by default 
 
     std::atomic<bool> isPlaying;
     std::mutex m;
@@ -29,14 +39,6 @@ public:
     uint32_t GetPlayerTime() const
     {
         return uint32_t((time + addedTime));
-    }
-
-    void InsertEvent(uint32_t track, MIDIEvent* event)
-    {
-        std::vector<MIDIEvent*>::iterator it;
-        for (it = notesPerTrack[track].begin(); it != notesPerTrack[track].end() && (*it)->start <= event->start; ++it);
-
-        notesPerTrack[track].insert(it, event);
     }
 
     Player()
@@ -52,60 +54,14 @@ public:
         fluid_settings_setnum(settings, "synth.gain", volume);
     }
 
-    ~Player()
-    {
-        for (auto& notes : notesPerTrack)
-        {
-            for (auto& note : notes)
-            {
-                delete note;
-            }
-        }
-    }
-
     void SetTime(double newTime)
     {
-        m.lock();
 
-        for (int i = 0; i < 16; i++)
-        {
-            fluid_synth_all_notes_off(synth, i);
-        }
-
-        //time = newTime;
-        addedTime = newTime - time;
-
-        for (int track = 0; track < GetNbTracks(); track++)
-        {
-            trackIndices[track] = 0;
-        }
-
-        uint32_t timeInMs = GetPlayerTime();
-        for (int track = 0; track < GetNbTracks(); track++)
-        {
-            while (trackIndices[track] < notesPerTrack[track].size())
-            {
-                MIDIEvent* note = notesPerTrack[track][trackIndices[track]];
-
-                //note->Play();
-
-                if (note->start < timeInMs)
-                {
-                    trackIndices[track]++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        m.unlock();
     }
 
     inline uint16_t GetNbTracks() const
     {
-        return notesPerTrack.size();
+        return music->tracks.size();
     }
 
     int LoadSoundfont(const char* sfPath)
@@ -117,6 +73,12 @@ public:
     {
         isPlaying = true;
         trackIndices.resize(GetNbTracks());
+        trackLastEventTime.resize(GetNbTracks());
+
+        for (double& d : trackLastEventTime)
+        {
+            d = 0.0;
+        }
 
         std::chrono::time_point programBeginTime = std::chrono::high_resolution_clock::now();
         while (isPlaying.load())
@@ -125,19 +87,29 @@ public:
 
             auto frameStartTime = std::chrono::high_resolution_clock::now();
 
-            time = std::chrono::duration<double, std::milli>(frameStartTime - programBeginTime).count();
+            time = std::chrono::duration<double, std::micro>(frameStartTime - programBeginTime).count();
             double finalTime = time + addedTime;
 
             // the work...
-            uint32_t timeInMs = uint32_t(finalTime);
+            // uint32_t timeInMs = uint32_t(finalTime);
             for (int track = 0; track < GetNbTracks(); track++)
             {
-                while (trackIndices[track] < notesPerTrack[track].size() && notesPerTrack[track][trackIndices[track]]->start < timeInMs)
+                MIDIMusic::TrackData& tr = music->tracks[track]; 
+
+                double timeSinceLastEvent = finalTime - trackLastEventTime[track];
+                uint32_t tickSinceLastEvent = timeSinceLastEvent * music->ticksPerQuarterNote / double(tempo);
+
+                if (trackIndices[track] < tr.midiEvents.size() && tr.midiEvents[trackIndices[track]]->deltaTime <= tickSinceLastEvent)
                 {
-                    MIDIEvent* note = notesPerTrack[track][trackIndices[track]];
-                    note->synth = synth;
-                    note->Play();
+                    PMIDIEvent& note = *tr.midiEvents[trackIndices[track]];
+                    note.Execute(this);
                     trackIndices[track]++;
+                    trackLastEventTime[track] += (double(note.deltaTime * tempo) / music->ticksPerQuarterNote);// microseconds to milliseconds 
+                    // timePerTrack[currentTrackIndex] += deltaTime * (tempo / ticksPerQuarterNote); 
+
+                    timeSinceLastEvent = finalTime - trackLastEventTime[track];
+                    tickSinceLastEvent = timeSinceLastEvent * music->ticksPerQuarterNote / double(tempo);
+                    //std::cout << "Tick2 : " << tickSinceLastEvent << std::endl;
                 }
             }
 
@@ -149,5 +121,43 @@ public:
 
             //time += dt;
         }
+    }
+
+    virtual void OnNoteOn(const NoteOn& noteOn) override
+    { 
+        Super::OnNoteOn(noteOn);
+        fluid_synth_noteon(synth, noteOn.channel, noteOn.key, noteOn.velocity);
+    }
+    virtual void OnNoteOff(const NoteOff& noteOff) override
+    { 
+        Super::OnNoteOff(noteOff);
+        fluid_synth_noteoff(synth, noteOff.channel, noteOff.key);
+    }
+    virtual void OnNoteOnOff(const NoteOnOff& noteOnOff) override
+    { 
+        Super::OnNoteOnOff(noteOnOff);
+        fluid_synth_noteon(synth, noteOnOff.channel, noteOnOff.key, noteOnOff.velocity);
+        // TODO : noteoff
+    }
+
+    virtual void OnTempo(const Tempo& tempo) 
+    {
+        Super::OnTempo(tempo); 
+        this->tempo = tempo.newTempo;
+    }
+    virtual void OnProgramChange(const ProgramChange& programChange) 
+    {
+        Super::OnProgramChange(programChange); 
+        fluid_synth_program_change(synth, programChange.channel, programChange.newProgram);
+    }
+    virtual void OnControlChange(const ControlChange& controlChange) 
+    {
+        Super::OnControlChange(controlChange); 
+        fluid_synth_cc(synth, controlChange.channel, (int)controlChange.ctrl, controlChange.value);
+    }
+    virtual void OnPitchBend(const PitchBend& pitchBend) 
+    {
+        Super::OnPitchBend(pitchBend); 
+        fluid_synth_pitch_bend(synth, pitchBend.channel, pitchBend.value);
     }
 };

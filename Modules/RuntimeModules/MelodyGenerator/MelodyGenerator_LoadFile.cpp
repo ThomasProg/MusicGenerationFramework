@@ -7,9 +7,12 @@ void MelodyGenerator_LoadFile::OnStart()
     MIDIMusic music;
     try
     {
-        MidiMusicParser parser;
-        parser.music = &music;
-        parser.parser.LoadFromFile(filePath);
+        MIDIMusicFiller filler;
+        filler.music = &music;
+
+        MIDIParserBase parserBase;
+        parserBase.observer = &filler;
+        parserBase.LoadFromFile(filePath);
     }
     catch (const std::exception& e)
     {
