@@ -5,14 +5,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # FILE(GLOB SOURCES Src/* Include/*)
 FILE(GLOB SOURCES *.cpp *.h)
-set(TargetName "PlayMIDI")
+set(TargetName "FluidsynthMIDIPlayerStandalone")
 project(${TargetName})
 
 # Create dynamic lib (.dll/.so)
-add_library(${TargetName} SHARED ${SOURCES})
+add_executable(${TargetName} ${SOURCES})
 
 # Add EasyMidiFileParserCpp
 target_link_libraries(${TargetName} EasyMidiFileParserCpp)
+
+target_link_libraries(${TargetName} FluidsynthMIDIPlayer)
 
 # Add fluidsynth
 set(enable-pkgconfig false) 
@@ -25,20 +27,26 @@ target_include_directories(${TargetName} PUBLIC
     "${PROJECT_SOURCE_DIR}/Public/" 
     "${ModulesDirectory}/fluidsynth/Downloads/include"
     "${ModulesDirectory}/EasyMidiFileParserCpp/Public"
+    "${ModulesDirectory}/FluidsynthMIDIPlayer"
 )
 
 add_custom_command(TARGET ${TargetName}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory 
   "${ModulesDirectory}/fluidsynth/Downloads/bin/" 
-  ${PlayMIDI_BINARY_DIR}/$<CONFIG>/.
+  ${FluidsynthMIDIPlayerStandalone_BINARY_DIR}/$<CONFIG>/.
 )
 
 add_custom_command(TARGET ${TargetName}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory 
   ${EasyMidiFileParserCpp_BINARY_DIR}/$<CONFIG>/.
-  ${PlayMIDI_BINARY_DIR}/$<CONFIG>/.
+  ${FluidsynthMIDIPlayerStandalone_BINARY_DIR}/$<CONFIG>/.
 )
 
-add_subdirectory(Standalone)
+add_custom_command(TARGET ${TargetName}
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory 
+  ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
+  ${FluidsynthMIDIPlayerStandalone_BINARY_DIR}/$<CONFIG>/.
+)

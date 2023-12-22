@@ -1,7 +1,9 @@
 // #include "ConvertingParser.h"
 // #include "MIDIEvents.h"
 #include "MIDIMusic.h"
-#include "Player.h"
+#include "FluidsynthMIDIPlayer.h"
+#include "MIDIPlayerAsync.h"
+#include "MIDIParserBase.h"
 #include <iostream>
 #include <future>
 
@@ -56,14 +58,18 @@ int main()
         //sfPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Roland_SC88/Roland_SC-88.sf2"; 
     }
 
-    Player player;
+    FluidsynthMIDIPlayer player;
+    MIDIPlayerAsync playerAsync;
+    playerAsync.player = &player;
+
     int sf = player.LoadSoundfont(sfPath.c_str());
     player.music = &music;
     // player.notesPerTrack = std::move(parser.notesPerTrack);
 
-    auto future = std::async(std::launch::async, [&player]
+    auto future = std::async(std::launch::async, [&playerAsync]
     { 
-        player.Play();
+        playerAsync.Play();
+        // player.Play();
     });
 
     while (1)
@@ -72,6 +78,7 @@ int main()
         std::cin >> s;
 
         int newTime = std::stof(s) * 1000;
-        player.SetTime(newTime);
+        // playerAsync.SetTime(newTime);
+        // player.SetTime(newTime);
     }
 }

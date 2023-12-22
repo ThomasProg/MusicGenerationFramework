@@ -1,5 +1,6 @@
 #include "MelodyGenerator_LoadFile.h"
 #include "MIDIMusic.h"
+#include "MIDIParserBase.h"
 #include <iostream>
 
 void MelodyGenerator_LoadFile::OnStart()

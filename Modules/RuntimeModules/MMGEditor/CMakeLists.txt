@@ -15,7 +15,7 @@ add_executable(${TargetName} ${SOURCES})
 
 # Add EasyMidiFileParserCpp
 target_link_libraries(${TargetName} EasyMidiFileParserCpp)
-target_link_libraries(${TargetName} PlayMIDI)
+target_link_libraries(${TargetName} FluidsynthMIDIPlayer)
 
 target_link_libraries(${TargetName} glad)
 target_link_libraries(${TargetName} glfw)
@@ -32,7 +32,7 @@ target_include_directories(${TargetName} PUBLIC
     "${PROJECT_SOURCE_DIR}/Public/" 
     "${ModulesDirectory}/fluidsynth/Downloads/include"
     "${ModulesDirectory}/EasyMidiFileParserCpp/Public"
-    "${ModulesDirectory}/PlayMIDI"
+    "${ModulesDirectory}/FluidsynthMIDIPlayer"
     "${ModulesDirectory}/glfw/include"
     "${ModulesDirectory}/glfw/deps"
     "${ModulesDirectory}/imgui/imgui"
@@ -56,7 +56,7 @@ add_custom_command(TARGET ${TargetName}
 add_custom_command(TARGET ${TargetName}
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory 
-  ${PlayMIDI_BINARY_DIR}/$<CONFIG>/.
+  ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
   ${MMGEditor_BINARY_DIR}/$<CONFIG>/.
 )
 

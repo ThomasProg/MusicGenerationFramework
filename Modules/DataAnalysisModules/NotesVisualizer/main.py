@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import sys
 
 # my_library = cdll.LoadLibrary('./my_library_wrapper.so')
-my_library = cdll.LoadLibrary('C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Build/Modules/RuntimeModules/PlayMIDI/Debug/PlayMIDI.dll')
+my_library = cdll.LoadLibrary('C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Build/Modules/RuntimeModules/FluidsynthMIDIPlayer/Debug/FluidsynthMIDIPlayer.dll')
 # my_library = cdll.LoadLibrary('C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Build/Modules/RuntimeModules/EasyMidiFileParserCpp/Debug/EasyMidiFileParserCpp.dll')
 
 
