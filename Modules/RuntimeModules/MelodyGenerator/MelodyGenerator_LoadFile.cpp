@@ -5,7 +5,7 @@
 
 void MelodyGenerator_LoadFile::OnStart()
 {
-    MIDIMusic music;
+    // MIDIMusic music;
     try
     {
         MIDIMusicFiller filler;
@@ -21,31 +21,33 @@ void MelodyGenerator_LoadFile::OnStart()
         return;
     }
 
-    if (music.tracks.size() > 0)
-    {
-        std::cout << "Amount of tracks : " << music.tracks.size() << std::endl;
+    onBufferGenerated(this);
 
-        for (MIDIMusic::TrackData& trackData : music.tracks)
-        {
-            for (std::shared_ptr<PMIDIEvent>& e : trackData.midiEvents)
-            {
-                std::shared_ptr<NoteOn> noteOn = std::dynamic_pointer_cast<NoteOn>(e);
+    // if (music.tracks.size() > 0)
+    // {
+    //     std::cout << "Amount of tracks : " << music.tracks.size() << std::endl;
 
-                if (noteOn)
-                {
-                    buffer.push_back(noteOn->key);
-                }
+    //     for (MIDIMusic::TrackData& trackData : music.tracks)
+    //     {
+    //         for (std::shared_ptr<PMIDIEvent>& e : trackData.midiEvents)
+    //         {
+    //             std::shared_ptr<NoteOn> noteOn = std::dynamic_pointer_cast<NoteOn>(e);
 
-                // NoteOff* noteOff = dynamic_cast<NoteOff*>(e.get());
-                // if (noteOff)
-                // {
+    //             if (noteOn)
+    //             {
+    //                 buffer.push_back(noteOn->key);
+    //             }
 
-                // }
-            }
-        }
+    //             // NoteOff* noteOff = dynamic_cast<NoteOff*>(e.get());
+    //             // if (noteOff)
+    //             // {
 
-        onBufferGenerated(this);
-    }
+    //             // }
+    //         }
+    //     }
+
+    //     onBufferGenerated(this);
+    // }
 }
 
 MelodyGenerator_LoadFile* CreateMelodyGenerator_LoadFile()

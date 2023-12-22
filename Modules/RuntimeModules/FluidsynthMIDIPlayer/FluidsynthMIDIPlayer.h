@@ -2,6 +2,10 @@
 
 #include "AMIDIPlayer.h"
 
+typedef struct _fluid_hashtable_t fluid_settings_t;             /**< Configuration settings instance */
+typedef struct _fluid_synth_t fluid_synth_t;                    /**< Synthesizer instance */
+typedef struct _fluid_audio_driver_t fluid_audio_driver_t;      /**< Audio driver instance */
+
 class MIDIPARSEREXPORT FluidsynthMIDIPlayer : public AMIDIPlayer
 {
 private:

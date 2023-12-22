@@ -8,6 +8,7 @@
 #define EXAMPLELIBRARY_IMPORT
 #endif
 
+#include "MIDIMusic.h"
 #include <vector>
 
 // EXAMPLELIBRARY_IMPORT void ExampleLibraryFunction();
@@ -113,7 +114,8 @@ class MelodyGenerator
 {
 public:
     void* userData = nullptr;
-    std::vector<int32_t> buffer;
+    // std::vector<int32_t> buffer;
+    MIDIMusic music;
 
     OnNotePlayedPtr onNotePlayed;
     OnNoteStoppedPtr onNoteStopped;
@@ -140,7 +142,7 @@ public:
         // onBufferGenerated([note], userData);
     }
 
-    virtual int32_t GetBufferSize() const = 0;
+    // virtual int32_t GetBufferSize() const = 0;
 
     using TOnBufferGenerated = void(MelodyGenerator* generator);
     TOnBufferGenerated* onBufferGenerated;
@@ -157,23 +159,23 @@ public:
 
     virtual ~MelodyGenerator_Impl1() = default;
 
-    virtual int32_t GetBufferSize() const override 
-    {
-        return nbNotesPerBar*nbBars;
-    }
+    // virtual int32_t GetBufferSize() const override 
+    // {
+    //     return nbNotesPerBar*nbBars;
+    // }
 
     virtual void OnStart() override
     {
-        buffer.resize(GetBufferSize());
+        // buffer.resize(GetBufferSize());
 
-        static constexpr int possibleNotes[] = {0,1,2,3,4,5,6};
+        // static constexpr int possibleNotes[] = {0,1,2,3,4,5,6};
 
-        int i = 0;
-        for (int32_t& note : buffer)
-        {
-            note = possibleNotes[i%(sizeof(possibleNotes) / sizeof(*possibleNotes))];
-            i++;
-        }
+        // int i = 0;
+        // for (int32_t& note : buffer)
+        // {
+        //     note = possibleNotes[i%(sizeof(possibleNotes) / sizeof(*possibleNotes))];
+        //     i++;
+        // }
 
         onBufferGenerated(this);
     }

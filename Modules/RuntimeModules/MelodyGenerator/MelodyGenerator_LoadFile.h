@@ -10,10 +10,10 @@ public:
 
     const char* filePath = nullptr;
 
-    virtual int32_t GetBufferSize() const override 
-    {
-        return buffer.size();
-    }
+    // virtual int32_t GetBufferSize() const override 
+    // {
+    //     return buffer.size();
+    // }
 
     virtual void OnStart() override;
 };

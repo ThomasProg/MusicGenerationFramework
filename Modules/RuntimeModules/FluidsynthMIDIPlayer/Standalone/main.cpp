@@ -4,6 +4,7 @@
 #include "FluidsynthMIDIPlayer.h"
 #include "MIDIPlayerAsync.h"
 #include "MIDIParserBase.h"
+#include "Converters/MIDIMusic_NoteOnOffConverter.h"
 #include <iostream>
 #include <future>
 
@@ -35,7 +36,7 @@ int main()
         parserBase.observer = &filler;
         parserBase.LoadFromFile(midiPath.c_str());
 
-        MIDIMusic_NoteOnOffConverter().Convert(music);
+        //MIDIMusic_NoteOnOffConverter().Convert(music);
     }
     catch (const std::exception& e)
     {
