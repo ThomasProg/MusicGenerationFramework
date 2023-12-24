@@ -5,6 +5,7 @@
 #include "MIDIPlayerAsync.h"
 #include "MIDIParserBase.h"
 #include "Converters/MIDIMusic_NoteOnOffConverter.h"
+#include "Converters/MIDIMusic_CompressorConverter.h"
 #include <iostream>
 #include <future>
 
@@ -18,7 +19,7 @@ int main()
         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-full/1/1a0b35079fd7d1e6d007e59f923643f4.mid"; 
         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid";
           midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.mid";
-         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/5th_Symphony.2.mid";
+         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/5th_Symphony.mid";
         // midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Blondie/Call_Me.2.mid";
         //midiPath = "C:/Users/thoma/Downloads/Never-Gonna-Give-You-Up-3.mid";
     }
@@ -36,7 +37,8 @@ int main()
         parserBase.observer = &filler;
         parserBase.LoadFromFile(midiPath.c_str());
 
-        //MIDIMusic_NoteOnOffConverter().Convert(music);
+        MIDIMusic_NoteOnOffConverter().Convert(music);
+        MIDIMusic_CompressorConverter(4*4).Convert(music);
     }
     catch (const std::exception& e)
     {
