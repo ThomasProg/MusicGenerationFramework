@@ -6,8 +6,11 @@
 #include "MIDIParserBase.h"
 #include "Converters/MIDIMusic_NoteOnOffConverter.h"
 #include "Converters/MIDIMusic_CompressorConverter.h"
+#include "Converters/MIDIMusic_MonoTrackConverter.h"
 #include <iostream>
 #include <future>
+
+#include "EventsPrinter.h"
 
 int main()
 {
@@ -17,8 +20,10 @@ int main()
     if (midiPath == "n")
     {
         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-full/1/1a0b35079fd7d1e6d007e59f923643f4.mid"; 
-        //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid";
-          midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.mid";
+        midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid";
+          //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.mid";
+         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Menuet.mid";
+        //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/The_Beatles/Devil_in_Her_Heart.mid";
          //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/5th_Symphony.mid";
         // midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Blondie/Call_Me.2.mid";
         //midiPath = "C:/Users/thoma/Downloads/Never-Gonna-Give-You-Up-3.mid";
@@ -37,8 +42,10 @@ int main()
         parserBase.observer = &filler;
         parserBase.LoadFromFile(midiPath.c_str());
 
-        MIDIMusic_NoteOnOffConverter().Convert(music);
-        MIDIMusic_CompressorConverter(4*4).Convert(music);
+        MIDIMusic_MonoTrackConverter().Convert(music);
+
+        //MIDIMusic_NoteOnOffConverter().Convert(music);
+        //MIDIMusic_CompressorConverter(4*4).Convert(music);
     }
     catch (const std::exception& e)
     {
@@ -46,6 +53,69 @@ int main()
         return 0;
     }
 
+    EventsPrinter printer;
+    //for (auto& track : music.tracks)
+    //{
+    //    for (auto& e : track.midiEvents)
+    //    {
+    //        e->Execute(&printer);
+    //    }
+    //}
+
+
+    {
+        auto& track = music.tracks[0];
+
+        for (auto& e : track.midiEvents)
+        {
+            std::cout << "DT : " << e->deltaTime << std::endl;
+        }
+    }
+    
+
+    double lastTime = 0;
+    uint32_t temp = 0.5 * 1000.0 * 1000.0; // microseconds / quarter note
+
+    for (auto& track : music.tracks)
+    //auto& track = music.tracks[0];
+    {
+        double s = 0;
+        int32_t trackNbTicks = 0;
+        for (auto& e : track.midiEvents)
+
+            //for (auto& e : music.tracks[2].midiEvents)
+        {
+            //double tempo = 1000.0 * 1000.0 * 60.0 / double(t);
+            // 60 / 32 = 1.875
+            double tick_duration = temp / music.ticksPerQuarterNote; // micros/ticks = micros / quarterNote    /    ticks / quarterNote
+            s += e->deltaTime * tick_duration; // ticks * micros/ticks
+
+            trackNbTicks += e->deltaTime;
+
+            // ticks
+            // ticksPerQuarterNote
+            // 
+
+
+            //if (s > lastTime)
+            {
+                lastTime = s;
+                std::cout << e->deltaTime << " / total time : " << s / 1000 / 1000 << " / ";
+                e->Execute(&printer);
+            }
+
+            if (Tempo* tempo = dynamic_cast<Tempo*>(e.get()))
+            {
+                temp = tempo->newTempo;
+            }
+
+        }
+
+        //std::cout << "TrackNbTicks : " << trackNbTicks << std::endl;
+
+        //double tick_duration = temp / music.ticksPerQuarterNote; // s/ticks = s / quarterNote    /    ticks / quarterNote
+        //std::cout << "Track Total Time : " << trackNbTicks * tick_duration / 1000 / 1000 << std::endl;
+    }
 
 
     // Load a SoundFont file
@@ -68,6 +138,12 @@ int main()
     int sf = player.LoadSoundfont(sfPath.c_str());
     player.music = &music;
     // player.notesPerTrack = std::move(parser.notesPerTrack);
+
+
+    std::cout << music.tracks.size();
+    //music.tracks.erase(music.tracks.begin() + 2);
+    //music.tracks[0] = music.tracks[2];
+    //music.tracks.resize(1);
 
     auto future = std::async(std::launch::async, [&playerAsync]
     { 

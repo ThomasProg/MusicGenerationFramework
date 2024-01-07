@@ -1,14 +1,16 @@
 #pragma once
 
 #include "MelodyGenerator.h"
+#include <string>
 
-class MelodyGenerator_LoadFile : public MelodyGenerator
+class __declspec(dllexport) MelodyGenerator_LoadFile : public MelodyGenerator
 {
+private:
+    std::string filePath;
+
 public:
     // MelodyGenerator_LoadFile();
     virtual ~MelodyGenerator_LoadFile() = default;
-
-    const char* filePath = nullptr;
 
     // virtual int32_t GetBufferSize() const override 
     // {
@@ -16,6 +18,7 @@ public:
     // }
 
     virtual void OnStart() override;
+    void SetFilePath(const char* newFilePath);
 };
 
 extern "C"

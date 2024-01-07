@@ -13,7 +13,7 @@ void MelodyGenerator_LoadFile::OnStart()
 
         MIDIParserBase parserBase;
         parserBase.observer = &filler;
-        parserBase.LoadFromFile(filePath);
+        parserBase.LoadFromFile(filePath.c_str());
     }
     catch (const std::exception& e)
     {
@@ -48,6 +48,11 @@ void MelodyGenerator_LoadFile::OnStart()
 
     //     onBufferGenerated(this);
     // }
+}
+
+void MelodyGenerator_LoadFile::SetFilePath(const char* newFilePath)
+{
+    filePath = newFilePath;
 }
 
 MelodyGenerator_LoadFile* CreateMelodyGenerator_LoadFile()

@@ -1,10 +1,7 @@
 #pragma once
 
 #include "AMIDIPlayer.h"
-
-typedef struct _fluid_hashtable_t fluid_settings_t;             /**< Configuration settings instance */
-typedef struct _fluid_synth_t fluid_synth_t;                    /**< Synthesizer instance */
-typedef struct _fluid_audio_driver_t fluid_audio_driver_t;      /**< Audio driver instance */
+#include "Fluidsynth/types.h"
 
 class MIDIPARSEREXPORT FluidsynthMIDIPlayer : public AMIDIPlayer
 {
@@ -25,5 +22,5 @@ public:
 
     virtual void OnProgramChange(const ProgramChange& programChange) override;
     virtual void OnControlChange(const ControlChange& controlChange) override;
-    virtual void OnPitchBend(const PitchBend& pitchBend);
+    virtual void OnPitchBend(const PitchBend& pitchBend) override;
 };
