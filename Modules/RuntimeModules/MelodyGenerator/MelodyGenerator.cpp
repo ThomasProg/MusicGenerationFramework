@@ -1,5 +1,4 @@
 #include "MelodyGenerator.h"
-#include <iostream>
 
 // MelodyGenerator* CreateMelodyGenerator()
 // {

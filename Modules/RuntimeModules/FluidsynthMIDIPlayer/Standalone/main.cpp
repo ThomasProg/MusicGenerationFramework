@@ -64,17 +64,17 @@ int main()
 
 
     {
-        auto& track = music.tracks[0];
+        //auto& track = music.tracks[0];
 
-        for (auto& e : track.midiEvents)
-        {
-            std::cout << "DT : " << e->deltaTime << std::endl;
-        }
+        //for (auto& e : track.midiEvents)
+        //{
+        //    std::cout << "DT : " << e->deltaTime << std::endl;
+        //}
     }
     
 
     double lastTime = 0;
-    uint32_t temp = 0.5 * 1000.0 * 1000.0; // microseconds / quarter note
+    double temp = 0.5 * 1000.0 * 1000.0; // microseconds / quarter note
 
     for (auto& track : music.tracks)
     //auto& track = music.tracks[0];
@@ -99,7 +99,7 @@ int main()
 
             //if (s > lastTime)
             {
-                lastTime = s;
+                //lastTime = s;
                 std::cout << e->deltaTime << " / total time : " << s / 1000 / 1000 << " / ";
                 e->Execute(&printer);
             }
@@ -140,11 +140,13 @@ int main()
     // player.notesPerTrack = std::move(parser.notesPerTrack);
 
 
-    std::cout << music.tracks.size();
+    //std::cout << music.tracks.size();
+    //music.tracks.erase(music.tracks.begin() + 0);
     //music.tracks.erase(music.tracks.begin() + 2);
     //music.tracks[0] = music.tracks[2];
     //music.tracks.resize(1);
 
+    //playerAsync.Play();
     auto future = std::async(std::launch::async, [&playerAsync]
     { 
         playerAsync.Play();
