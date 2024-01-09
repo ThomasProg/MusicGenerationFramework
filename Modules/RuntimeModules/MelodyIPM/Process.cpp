@@ -4,8 +4,18 @@
 #include "Converters/MIDIMusic_MonoTrackConverter.h"
 #include "Converters/MIDIMusic_InstrumentFilter.h"
 #include <cassert>
+#include <iostream>
 
-void RunIP1(MIDIMusic* music)
+#include "MelodyExtractor.h"
+
+void PrintInformation(MIDIMusic& music)
+{
+    std::cout << "NbTracks : " << music.tracks.size() << std::endl;
+    std::cout << "NbChannels : " << music.GetNbChannels() << std::endl;
+    std::cout << "Duration (in seconds) : " << music.GetDurationInMicroseconds() / 1000.0 / 1000.0 << std::endl;
+}
+
+void MelodyRunIP1(MIDIMusic* music)
 {
     assert(music != nullptr);
 

@@ -7,10 +7,43 @@
 #include "Converters/MIDIMusic_NoteOnOffConverter.h"
 #include "Converters/MIDIMusic_CompressorConverter.h"
 #include "Converters/MIDIMusic_MonoTrackConverter.h"
+#include "Converters/MIDIMusic_InstrumentFilter.h"
 #include <iostream>
 #include <future>
 
 #include "EventsPrinter.h"
+#include "MIDIMusicFiller.h"
+
+// Monotrack only
+std::map<uint32_t, uint32_t> GetCountPerProgram(const MIDIMusic& music, uint32_t& nbBeats)
+{
+    std::map<uint32_t, uint32_t> programToCount;
+    std::map<uint32_t, uint32_t> channelToProgram;
+    nbBeats = 0;
+    for (auto& track : music.tracks)
+    {
+        for (auto& e : track.midiEvents)
+        {
+            if (std::shared_ptr<ProgramChange> event = dynamic_pointer_cast<ProgramChange>(e))
+            {
+                channelToProgram[event->channel] = event->newProgram;
+            }
+            else if (std::shared_ptr<NoteOnOff> event = dynamic_pointer_cast<NoteOnOff>(e))
+            {
+                if (event->channel == 9) nbBeats++;
+                else programToCount[channelToProgram[event->channel]]++;
+            }
+            else if (std::shared_ptr<NoteOn> event = dynamic_pointer_cast<NoteOn>(e))
+            {
+                if (event->channel == 9) nbBeats++;
+                else programToCount[channelToProgram[event->channel]]++;
+            }
+        }
+    }
+    return programToCount;
+}
+
+
 
 int main()
 {
@@ -43,6 +76,8 @@ int main()
         parserBase.LoadFromFile(midiPath.c_str());
 
         MIDIMusic_MonoTrackConverter().Convert(music);
+        MIDIMusic_NoteOnOffConverter().Convert(music);
+        //MIDIMusic_InstrumentFilter(30, 30, false).Convert(music);
 
         //MIDIMusic_NoteOnOffConverter().Convert(music);
         //MIDIMusic_CompressorConverter(4*4).Convert(music);
@@ -62,61 +97,17 @@ int main()
     //    }
     //}
 
+    std::cout << "NbTracks : " << music.tracks.size() << std::endl;
+    std::cout << "NbChannels : " << music.GetNbChannels() << std::endl;
+    std::cout << "Duration (in seconds) : " << music.GetDurationInMicroseconds() / 1000.0 / 1000.0 << std::endl;
 
+    uint32_t nbBeats;
+    std::map<uint32_t, uint32_t> counterPerProgram = GetCountPerProgram(music, nbBeats);
+    for (auto& [program, count] : counterPerProgram)
     {
-        //auto& track = music.tracks[0];
-
-        //for (auto& e : track.midiEvents)
-        //{
-        //    std::cout << "DT : " << e->deltaTime << std::endl;
-        //}
+        std::cout << "Program : " << program << " / Count : " << count << std::endl;
     }
-    
-
-    double lastTime = 0;
-    double temp = 0.5 * 1000.0 * 1000.0; // microseconds / quarter note
-
-    for (auto& track : music.tracks)
-    //auto& track = music.tracks[0];
-    {
-        double s = 0;
-        int32_t trackNbTicks = 0;
-        for (auto& e : track.midiEvents)
-
-            //for (auto& e : music.tracks[2].midiEvents)
-        {
-            //double tempo = 1000.0 * 1000.0 * 60.0 / double(t);
-            // 60 / 32 = 1.875
-            double tick_duration = temp / music.ticksPerQuarterNote; // micros/ticks = micros / quarterNote    /    ticks / quarterNote
-            s += e->deltaTime * tick_duration; // ticks * micros/ticks
-
-            trackNbTicks += e->deltaTime;
-
-            // ticks
-            // ticksPerQuarterNote
-            // 
-
-
-            //if (s > lastTime)
-            {
-                //lastTime = s;
-                std::cout << e->deltaTime << " / total time : " << s / 1000 / 1000 << " / ";
-                e->Execute(&printer);
-            }
-
-            if (Tempo* tempo = dynamic_cast<Tempo*>(e.get()))
-            {
-                temp = tempo->newTempo;
-            }
-
-        }
-
-        //std::cout << "TrackNbTicks : " << trackNbTicks << std::endl;
-
-        //double tick_duration = temp / music.ticksPerQuarterNote; // s/ticks = s / quarterNote    /    ticks / quarterNote
-        //std::cout << "Track Total Time : " << trackNbTicks * tick_duration / 1000 / 1000 << std::endl;
-    }
-
+    std::cout << "Percussions Count : " << nbBeats << std::endl;
 
     // Load a SoundFont file
     std::string sfPath;

@@ -1,5 +1,7 @@
 #pragma once
 
+class MIDIMusic;
+
 #include "MIDIMusic.h"
 
 // // Melody Input Processing 1
@@ -10,7 +12,8 @@
 
 extern "C" 
 {
-    void RunIP1(MIDIMusic* music);
+    void PrintInformation(MIDIMusic& music);
+    void MelodyRunIP1(MIDIMusic* music);
 
 }
 
