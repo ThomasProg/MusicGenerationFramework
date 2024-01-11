@@ -13,3 +13,6 @@
 [submodule "Modules/RuntimeModules/json"]
 	path = Modules/RuntimeModules/json
 	url = https://github.com/nlohmann/json.git
+[submodule "Modules/RuntimeModulesWrappers/Python/PyMIDIMusic"]
+	path = Modules/RuntimeModulesWrappers/Python/PyMIDIMusic
+	url = git@github.com:ThomasProg/PyMIDIMusic.git
