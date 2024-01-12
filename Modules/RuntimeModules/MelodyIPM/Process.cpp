@@ -3,16 +3,18 @@
 #include "Converters/MIDIMusic_NoteOnOffConverter.h"
 #include "Converters/MIDIMusic_MonoTrackConverter.h"
 #include "Converters/MIDIMusic_InstrumentFilter.h"
+#include "Converters/MIDIMusic_AbsoluteConverter.h"
+#include "Converters/MIDIMusic_RelativeConverter.h"
 #include <cassert>
 #include <iostream>
 
 #include "MelodyExtractor.h"
 
-void PrintInformation(MIDIMusic& music)
+void PrintInformation(MIDIMusic* music)
 {
-    std::cout << "NbTracks : " << music.tracks.size() << std::endl;
-    std::cout << "NbChannels : " << music.GetNbChannels() << std::endl;
-    std::cout << "Duration (in seconds) : " << music.GetDurationInMicroseconds() / 1000.0 / 1000.0 << std::endl;
+    std::cout << "NbTracks : " << music->tracks.size() << std::endl;
+    std::cout << "NbChannels : " << music->GetNbChannels() << std::endl;
+    std::cout << "Duration (in seconds) : " << music->GetDurationInMicroseconds() / 1000.0 / 1000.0 << std::endl;
 }
 
 void MelodyRunIP1(MIDIMusic* music)

@@ -77,7 +77,8 @@ Currently not recommended because of submodules.\
 From the root folder:
 
 1. Generate Build files and download dependencies.\
-    `cmake -B Build -DDOWNLOAD_ASSETS=ON -DBUILD_MODULES=ON -DDOWNLOAD_SUBMODULES=ON -DDOWNLOAD_MODULE_DEPENDENCIES=ON`
+    `cmake -B Build -DDOWNLOAD_ASSETS=ON -DBUILD_MODULES=ON -DDOWNLOAD_SUBMODULES=ON -DDOWNLOAD_MODULE_DEPENDENCIES=ON`\
+    `cmake -B Build -DDOWNLOAD_ASSETS=OFF -DBUILD_MODULES=ON -DDOWNLOAD_SUBMODULES=OFF -DDOWNLOAD_MODULE_DEPENDENCIES=ON`
     
 2. Build modules (in Release or Debug).\
 `cmake --build Build --config Debug --target ModularMusicGenerationCore LoadAllMIDI`\

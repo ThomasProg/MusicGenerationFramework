@@ -10,6 +10,10 @@
 #include "Converters/MIDIMusic_InstrumentFilter.h"
 #include <iostream>
 #include <future>
+#include <map>
+#include <memory>
+#include <cstdint>
+#include "PMIDIEvent.h"
 
 #include "EventsPrinter.h"
 #include "MIDIMusicFiller.h"

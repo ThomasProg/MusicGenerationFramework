@@ -12,7 +12,7 @@ class MIDIMusic;
 
 extern "C" 
 {
-    void PrintInformation(MIDIMusic& music);
+    void PrintInformation(MIDIMusic* music);
     void MelodyRunIP1(MIDIMusic* music);
 
 }

@@ -4,6 +4,8 @@
 #include "Converters/MIDIMusic_MonoTrackConverter.h"
 #include "Converters/MIDIMusic_InstrumentFilter.h"
 #include "Converters/MIDIMusic_ChannelFilter.h"
+#include "Converters/MIDIMusic_AbsoluteConverter.h"
+#include "Converters/MIDIMusic_RelativeConverter.h"
 
 // // Monotrack only
 // std::map<uint32_t, uint32_t> GetCountPerProgram(const MIDIMusic& music)
