@@ -1,30 +1,17 @@
-# from PyEasyMidiFileParserCpp import *
-
-# import sys
-# print(sys.path)
-# from MIDIMusic.py import *
-from PyEasyMidiFileParserCppX import *
+from PyMIDIMusic import *
 import matplotlib.pyplot as plt
 
 class Test(IMIDIEventReceiver):
+    channels = []
     times = []
     notes = []
     colors = []
-    time = 0
-
-    def OnEvent(self, event): 
-        self.time += PMIDIEvent(event).GetDeltaTime()
-
-    def OnSysEvent(self, event): pass
-    def OnMetaEvent(self, event): pass
-    def OnChannelEvent(self, event): pass
 
     def OnNoteOn(self, event): 
         e = NoteOn(event)
-        print(str(e.GetKey()))
-        print(str(e.GetDeltaTime()))
-        self.times.append(self.time)
+        self.times.append(e.GetDeltaTime())
         self.notes.append(e.GetKey())
+        self.channels.append(e.GetChannel())
     def OnNoteOff(self, event): pass
     def OnNoteOnOff(self, event): pass
 
@@ -33,17 +20,22 @@ music = MIDIMusic()
 
 music.LoadFromFile("C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid")
 
+# easyLib.MIDIMusic_FilterChannel(music.nativeObject, 9, True)
+# easyLib.MIDIMusic_ConvertToMonoTrack(music.nativeObject)
+
+# easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
+# easyLib.MIDIMusic_FilterInstruments(music.nativeObject, 0, 7, False)
+
+easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
+
 test = Test()
 Dispatch(music, test)
 
 plt.figure(figsize=(10, 5))  # Set the figure size (optional)
-# plt.plot(times, notes, marker='o')  # 'o' adds points at data
-# plt.scatter(times, notes, marker='o', color = colors)
 plt.scatter(test.times, test.notes, marker='o')
 
 plt.xlabel('Time')
 plt.ylabel('Note')
-# plt.title(filename + " / Track : " + str(trackIndex))
-plt.title("Title")
+plt.title("KeyPerTiming")
 
 plt.show()
