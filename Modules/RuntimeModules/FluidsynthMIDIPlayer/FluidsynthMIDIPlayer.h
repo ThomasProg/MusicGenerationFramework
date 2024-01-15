@@ -24,3 +24,9 @@ public:
     virtual void OnControlChange(const ControlChange& controlChange) override;
     virtual void OnPitchBend(const PitchBend& pitchBend) override;
 };
+
+extern "C"
+{
+    MIDIPARSEREXPORT FluidsynthMIDIPlayer* FluidsynthMIDIPlayer_Create();
+    MIDIPARSEREXPORT void FluidsynthMIDIPlayer_Delete(class FluidsynthMIDIPlayer* player);
+}

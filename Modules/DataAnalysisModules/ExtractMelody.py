@@ -1,5 +1,7 @@
+import threading
 from PyMIDIMusic import *
 import matplotlib.pyplot as plt
+import asyncio
 
 class Test(IMIDIEventReceiver):
     channels = []
@@ -26,7 +28,8 @@ easyLib.MIDIMusic_ConvertToNoteOnOff(music.nativeObject)
 # easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
 easyLib.MIDIMusic_FilterInstruments(music.nativeObject, 0, 7, False)
 
-easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
+music.Play("C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Touhou/Touhou.sf2")
+# easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
 
 test = Test()
 Dispatch(music, test)
@@ -39,3 +42,17 @@ plt.ylabel('Note')
 plt.title("Channel per note")
 
 plt.show()
+
+# easyLib.MIDIMusic_ConvertRelative(music.nativeObject)
+
+# PlayMusic(music)
+
+while (True):
+    i = input()
+    if (i == "q"):
+        music.Stop()
+        quit()
+
+
+
+

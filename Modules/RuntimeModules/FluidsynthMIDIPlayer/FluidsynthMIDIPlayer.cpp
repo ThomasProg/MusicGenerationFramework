@@ -51,3 +51,12 @@ void FluidsynthMIDIPlayer::OnPitchBend(const PitchBend& pitchBend)
     Super::OnPitchBend(pitchBend); 
     fluid_synth_pitch_bend(synth, pitchBend.channel, pitchBend.value);
 }
+
+FluidsynthMIDIPlayer* FluidsynthMIDIPlayer_Create()
+{
+    return new FluidsynthMIDIPlayer();
+}
+void FluidsynthMIDIPlayer_Delete(class FluidsynthMIDIPlayer* player)
+{
+    delete(player);
+}
