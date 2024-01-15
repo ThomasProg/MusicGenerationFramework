@@ -29,10 +29,12 @@ easyLib.MIDIMusic_ConvertToNoteOnOff(music.nativeObject)
 easyLib.MIDIMusic_FilterInstruments(music.nativeObject, 0, 7, False)
 
 music.Play("C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Touhou/Touhou.sf2")
-# easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
+
+statMusic = music.Clone()
+easyLib.MIDIMusic_ConvertAbsolute(statMusic.nativeObject)
 
 test = Test()
-Dispatch(music, test)
+Dispatch(statMusic, test)
 
 plt.figure(figsize=(10, 5))  # Set the figure size (optional)
 plt.scatter(test.times, test.notes, marker='o')
@@ -42,9 +44,6 @@ plt.ylabel('Note')
 plt.title("Channel per note")
 
 plt.show()
-
-# easyLib.MIDIMusic_ConvertRelative(music.nativeObject)
-
 # PlayMusic(music)
 
 while (True):
