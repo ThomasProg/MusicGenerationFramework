@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+project("MusicGenerationFramework")
+
 option(DOWNLOAD_ASSETS "Download assets automatically" ON)
 option(BUILD_MODULES "Build modules automatically" ON)
 option(DOWNLOAD_SUBMODULES "Download submodules automatically" ON) # [TODO]

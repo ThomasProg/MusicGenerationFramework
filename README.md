@@ -94,6 +94,11 @@ The first time the cmake command is ran, it will take a long time.
 
 Downloads also take a long time, so consider disabling them if they are not needed or if you have already downloaded them.
 
+If it doesn't work, you might need to install some other packages before that.
+To compile glfw on linux:
+```
+sudo apt-get install xorg-dev
+```
 
 #### Adding the framework to your CMake Project
 

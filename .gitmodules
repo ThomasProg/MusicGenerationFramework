@@ -16,3 +16,6 @@
 [submodule "Modules/RuntimeModulesWrappers/Python/PyMIDIMusic"]
 	path = Modules/RuntimeModulesWrappers/Python/PyMIDIMusic
 	url = git@github.com:ThomasProg/PyMIDIMusic.git
+[submodule "Modules/RuntimeModules/imgui/imgui"]
+	path = Modules/RuntimeModules/imgui/imgui
+	url = git@github.com:ocornut/imgui.git
