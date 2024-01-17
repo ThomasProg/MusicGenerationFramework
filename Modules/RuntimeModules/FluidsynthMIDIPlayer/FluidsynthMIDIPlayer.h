@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AMIDIPlayer.h"
-#include "Fluidsynth/types.h"
+#include "fluidsynth/types.h"
 
 class MIDIPARSEREXPORT FluidsynthMIDIPlayer : public AMIDIPlayer
 {

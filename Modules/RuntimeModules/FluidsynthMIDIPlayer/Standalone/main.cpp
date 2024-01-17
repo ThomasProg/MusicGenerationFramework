@@ -57,7 +57,8 @@ int main()
     if (midiPath == "n")
     {
         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-full/1/1a0b35079fd7d1e6d007e59f923643f4.mid"; 
-        midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid";
+        // midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid";
+        midiPath = ASSETS_PATH "Fur_Elise.1.mid";
           //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.mid";
          //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Menuet.mid";
         //midiPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/The_Beatles/Devil_in_Her_Heart.mid";
@@ -119,7 +120,8 @@ int main()
     std::cin >> sfPath;
     if (sfPath == "n")
     {
-          sfPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Touhou/Touhou.sf2"; 
+        //   sfPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Touhou/Touhou.sf2"; 
+          sfPath = ASSETS_PATH "Touhou.sf2"; 
         // sfPath = "C:/Users/thoma/Downloads/Minecraft/Minecraft Note Block Studio (ver3.3.4).sf2"; 
         //sfPath = "C:/Users/thoma/Downloads/Minecraft/Minecraft GM.sf2"; 
          //sfPath = "C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Undertale/undertale.sf2"; 

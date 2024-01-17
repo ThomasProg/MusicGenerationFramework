@@ -81,8 +81,8 @@ From the root folder:
     `cmake -B Build -DDOWNLOAD_ASSETS=OFF -DBUILD_MODULES=ON -DDOWNLOAD_SUBMODULES=OFF -DDOWNLOAD_MODULE_DEPENDENCIES=ON`
     
 2. Build modules (in Release or Debug).\
-`cmake --build Build --config Debug --target ModularMusicGenerationCore FluidsynthMIDIPlayer`\
-`cmake --build Build --config Release --target ModularMusicGenerationCore FluidsynthMIDIPlayer`
+`cmake --build Build --config Debug --target FluidsynthMIDIPlayer`\
+`cmake --build Build --config Release --target FluidsynthMIDIPlayer`
 
 Options:
 - **BUILD_MODULES** : if enabled, build files will be generated for modules.
