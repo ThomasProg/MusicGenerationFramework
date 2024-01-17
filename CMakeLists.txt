@@ -14,6 +14,9 @@ add_compile_definitions(ASSETS_PATH="${CMAKE_SOURCE_DIR}/Assets/")
 add_compile_definitions(DATASETS_PATH="${CMAKE_SOURCE_DIR}/Assets/Datasets/")
 add_compile_definitions(ANALYSIS_MODULES_PATH="${CMAKE_SOURCE_DIR}/Modules/DataAnalysisModules/")
 
+set(FluidSynth_DIR "${CMAKE_SOURCE_DIR}/Modules/RuntimeModules/fluidsynth/Downloads/lib/cmake/fluidsynth")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/Install" CACHE PATH "Installation prefix")
+
 if(BUILD_MODULES)
     add_subdirectory(Modules)
 endif()

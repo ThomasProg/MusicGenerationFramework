@@ -100,6 +100,8 @@ To compile glfw on linux:
 sudo apt-get install xorg-dev
 ```
 
+Use `cmake --install Build` to put the libraries, executables, and headers in a clean folder.
+
 #### Adding the framework to your CMake Project
 
 If you are building your own program using CMake, it is recommended to just use add_subdirectory():
