@@ -8,16 +8,30 @@ FILE(GLOB SOURCES *.cpp *.h)
 # Create the shared library
 add_library(FluidsynthMIDIPlayer SHARED ${SOURCES})
 
-# Link the library with Fluidsynth
-target_link_libraries(FluidsynthMIDIPlayer "${ModulesDirectory}/fluidsynth/Downloads/lib/libfluidsynth.dll.a")
+if (UNIX)
+# Use PKG_CONFIG to find Fluidsynth
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FLUIDSYNTH REQUIRED fluidsynth)
 
-target_link_libraries(FluidsynthMIDIPlayer EasyMidiFileParserCpp)
+target_link_libraries(FluidsynthMIDIPlayer PRIVATE ${FluidSynth_LIBRARIES} -lfluidsynth)
+target_include_directories(FluidsynthMIDIPlayer PRIVATE ${FluidSynth_INCLUDE_DIRS})
+
+endif (UNIX)
+
+if (WIN32)
+# Link the library with Fluidsynth
+target_link_libraries(FluidsynthMIDIPlayer PRIVATE "${ModulesDirectory}/fluidsynth/Downloads/lib/libfluidsynth.dll.a")
+target_include_directories(FluidsynthMIDIPlayer PUBLIC
+    "${ModulesDirectory}/fluidsynth/Downloads/include"
+)
+endif (WIN32)
+
+target_link_libraries(FluidsynthMIDIPlayer PRIVATE EasyMidiFileParserCpp)
 
 # Set include directories
 target_include_directories(FluidsynthMIDIPlayer PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     "${ModulesDirectory}/EasyMidiFileParserCpp/Public"
-    "${ModulesDirectory}/fluidsynth/Downloads/include"
 )
 
 target_include_directories(FluidsynthMIDIPlayer PRIVATE ${FluidSynth_INCLUDE_DIRS})
@@ -35,9 +49,6 @@ install(FILES ${DLL_FILES}
 # Set RPATH to include the bin directory (Linux/macOS)
 set_target_properties(FluidsynthMIDIPlayer PROPERTIES
                       INSTALL_RPATH "$ORIGIN/bin")
-    
-set_target_properties(FluidsynthMIDIPlayer PROPERTIES
-                      VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin")
 
 add_custom_command(TARGET FluidsynthMIDIPlayer
   POST_BUILD
