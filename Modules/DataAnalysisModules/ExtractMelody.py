@@ -2,6 +2,7 @@ import threading
 from PyMIDIMusic import *
 import matplotlib.pyplot as plt
 import asyncio
+import json
 
 class Test(IMIDIEventReceiver):
     channels = []
@@ -17,7 +18,10 @@ class Test(IMIDIEventReceiver):
 
 music = MIDIMusic() 
 
-music.LoadFromFile("C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid")
+f = open('settings.json', 'r')
+json_dict = json.load(f)
+
+music.LoadFromFile(json_dict["defaultMIDI"])
 
 
 easyLib.MIDIMusic_FilterChannel(music.nativeObject, 9, True)
@@ -28,7 +32,7 @@ easyLib.MIDIMusic_ConvertToNoteOnOff(music.nativeObject)
 # easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
 easyLib.MIDIMusic_FilterInstruments(music.nativeObject, 0, 7, False)
 
-music.Play("C:/Users/thoma/PandorasBox/Projects/ModularMusicGenerationModules/Assets/Soundfonts/Touhou/Touhou.sf2")
+music.Play(json_dict["defaultSoundfont"])
 
 statMusic = music.Clone()
 easyLib.MIDIMusic_ConvertAbsolute(statMusic.nativeObject)
