@@ -4,8 +4,10 @@ import numpy as np
 
 import time
 
+folderName = "Assets/Models/ddim-butterflies-16/"
+
 # load model and scheduler
-pipe = DDIMPipeline.from_pretrained("Assets/Models/ddim-butterflies-16")
+pipe = DDIMPipeline.from_pretrained(folderName)
 
 genStartTime = time.time()
 
@@ -21,4 +23,4 @@ print("--- %s seconds ---" % (time.time() - genStartTime))
 # image_pil = PIL.Image.fromarray(image_processed[0])
 
 # save image
-image.save("aaaa.png")
+image.save(folderName + "inferencePic.png")
