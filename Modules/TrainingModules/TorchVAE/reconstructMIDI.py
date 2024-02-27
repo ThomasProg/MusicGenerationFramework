@@ -56,7 +56,7 @@ class Test(IMIDIEventReceiver):
 
 music = MIDIMusic() 
 
-music.LoadFromFile("/home/progz/projects/MusicGenerationFramework/Assets/Fur_Elise.1.mid")
+music.LoadFromFile("Assets/Datasets/LakhMidi-Clean/Ludwig_van_Beethoven/Fur_Elise.1.mid")
 
 
 easyLib.MIDIMusic_FilterChannel(music.nativeObject, 9, True)
@@ -182,7 +182,7 @@ latent_dims = 10
 autoencoder = VariationalAutoencoder(latent_dims).to(device) # GPU
 
 data = torch.utils.data.DataLoader(
-        torchvision.datasets.MNIST('./data', 
+        torchvision.datasets.MNIST('./Assets/Datasets/MNIST', 
                transform=torchvision.transforms.ToTensor(), 
                download=True),
         batch_size=128,
@@ -269,7 +269,7 @@ for i in x_hat:
 
     music.AddEvent(noteOnOff)
 
-music.Play("/home/progz/projects/MusicGenerationFramework/Assets/Touhou.sf2")
+music.Play("Assets/Soundfonts/Touhou/Touhou.sf2")
 
 plt.show()
 
