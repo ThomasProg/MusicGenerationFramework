@@ -77,8 +77,8 @@ print("Min : ", test.minPitch)
 print("Max : ", test.maxPitch)
 
 tokens.pop()
-# grid = np.array(tokens).reshape((252, 16))
-grid = np.zeros(shape=(252, 16))
+grid = np.array(tokens).reshape((252, 16))
+# grid = np.zeros(shape=(252, 16))
 
 MIDIToVector.DisplayMusicRhythm(grid)
 
