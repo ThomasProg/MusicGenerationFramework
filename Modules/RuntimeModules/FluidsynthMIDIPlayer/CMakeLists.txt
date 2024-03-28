@@ -50,18 +50,18 @@ install(FILES ${DLL_FILES}
 set_target_properties(FluidsynthMIDIPlayer PROPERTIES
                       INSTALL_RPATH "$ORIGIN/bin")
 
-add_custom_command(TARGET FluidsynthMIDIPlayer
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory 
-  "${ModulesDirectory}/fluidsynth/Downloads/bin/" 
-  ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
-)
+# add_custom_command(TARGET FluidsynthMIDIPlayer
+#   POST_BUILD
+#   COMMAND ${CMAKE_COMMAND} -E copy_directory 
+#   "${ModulesDirectory}/fluidsynth/Downloads/bin/" 
+#   ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
+# )
 
-add_custom_command(TARGET FluidsynthMIDIPlayer
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory 
-  ${EasyMidiFileParserCpp_BINARY_DIR}/$<CONFIG>/.
-  ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
-)
+# add_custom_command(TARGET FluidsynthMIDIPlayer
+#   POST_BUILD
+#   COMMAND ${CMAKE_COMMAND} -E copy_directory 
+#   ${EasyMidiFileParserCpp_BINARY_DIR}/$<CONFIG>/.
+#   ${FluidsynthMIDIPlayer_BINARY_DIR}/$<CONFIG>/.
+# )
 
 add_subdirectory(Standalone)

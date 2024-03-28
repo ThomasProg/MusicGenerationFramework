@@ -8,10 +8,15 @@
 class MIDIPARSEREXPORT FluidsynthPlayerAsync : public MIDIPlayerAsync
 {
 public:
+    using Super = MIDIPlayerAsync;
+
     FluidsynthMIDIPlayer fluidsynthPlayer;
     std::future<void> playerFuture;
 
     FluidsynthPlayerAsync(class MIDIMusic* music);
+
+    // virtual void Play();
+    virtual void Stop() override;
 };
 
 extern "C"

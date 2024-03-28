@@ -23,7 +23,6 @@ json_dict = json.load(f)
 
 music.LoadFromFile(json_dict["defaultMIDI"])
 
-
 easyLib.MIDIMusic_FilterChannel(music.nativeObject, 9, True)
 easyLib.MIDIMusic_ConvertToMonoTrack(music.nativeObject)
 
@@ -31,6 +30,8 @@ easyLib.MIDIMusic_ConvertToNoteOnOff(music.nativeObject)
 
 # easyLib.MIDIMusic_ConvertAbsolute(music.nativeObject)
 easyLib.MIDIMusic_FilterInstruments(music.nativeObject, 0, 7, False)
+
+print("GetTicksPerQuarterNote(): ", music.GetTicksPerQuarterNote())
 
 music.Play(json_dict["defaultSoundfont"])
 

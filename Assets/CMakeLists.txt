@@ -12,7 +12,6 @@ if(DOWNLOAD_SOUNDFONTS)
     add_subdirectory(Soundfonts)
 endif()
 
-if(DOWNLOAD_MODELS)
-    add_subdirectory(Models)
-endif()
-
+# if(DOWNLOAD_MODELS)
+#     add_subdirectory(Models)
+# endif()

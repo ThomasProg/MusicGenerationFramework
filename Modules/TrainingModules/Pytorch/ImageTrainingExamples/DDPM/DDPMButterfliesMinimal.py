@@ -2,7 +2,7 @@
 # https://huggingface.co/docs/diffusers/main/en/tutorials/basic_training
 
 shouldPlot = False
-resume_from_checkpoint = True #"Assets/Models/ddpm-butterflies-32/unet/diffusion_pytorch_model.safetensors"
+resume_from_checkpoint = True
 
 
 
@@ -13,23 +13,23 @@ from dataclasses import dataclass
 
 @dataclass
 class TrainingConfig:
-    image_size = 128  # the generated image resolution
+    image_size = 32 #128  # the generated image resolution
     train_batch_size = 16
     eval_batch_size = 16  # how many images to sample during evaluation
-    num_epochs = 50
+    num_epochs = 20
     gradient_accumulation_steps = 1
     learning_rate = 1e-4
-    lr_warmup_steps = 500
-    save_image_epochs = 10
-    save_model_epochs = 1
+    lr_warmup_steps = 1000
+    save_image_epochs = 1
+    save_model_epochs = 2
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/ddim-butterflies-128'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/ddpm-flowers-minimal-16'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
     overwrite_output_dir = True  # overwrite the old model when re-running the notebook
     seed = 0
-    num_train_timesteps=1000
+    num_train_timesteps=200
 
 config = TrainingConfig()
 
@@ -45,16 +45,47 @@ from datasets import load_dataset
 config.dataset_name = "huggan/smithsonian_butterflies_subset"
 dataset = load_dataset(config.dataset_name, split="train")
 
-# Feel free to try other datasets from https://hf.co/huggan/ too! 
-# Here's is a dataset of flower photos:
-# config.dataset_name = "huggan/flowers-102-categories"
-# dataset = load_dataset(config.dataset_name, split="train")
 
-# Or just load images from a local folder!
-# config.dataset_name = "imagefolder"
-# dataset = load_dataset(config.dataset_name, data_dir="path/to/folder")
+# from torch.utils.data import Dataset
+# import os
+# class ImageFolderDataset(Dataset):
+#     def __init__(self, root_dir, transform=None):
+#         self.root_dir = root_dir
+#         self.transform = transform
+#         self.file_list = os.listdir(root_dir)
 
+#     def __len__(self):
+#         return len(self.file_list)
 
+#     def __getitem__(self, idx):
+#         img_name = os.path.join(self.root_dir, self.file_list[idx])
+#         image = Image.open(img_name)
+#         if self.transform:
+#             image = self.transform(image)
+#         return image
+
+# dataset = ImageFolderDataset(root_dir='Assets/Datasets/Flowers102/PreProcessed')
+if True:
+    from PIL import Image
+    from datasets import Dataset
+    import os
+
+    # Specify the directory
+    folder_path = 'Assets/Datasets/Flowers102/flowers-102/jpg/'
+
+    v = []
+
+    for file_name in os.listdir(folder_path):
+        relativePath = os.path.join(folder_path, file_name)
+        if os.path.isfile(relativePath):
+            # image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
+            image = Image.open(relativePath)
+            v.append(image)
+
+    # image_array = np.array(image)
+    data_dict = {"image": v}
+    dataset = Dataset.from_dict(data_dict)
+    dataset.set_format(type="numpy")
 
 
 
@@ -67,10 +98,6 @@ if shouldPlot:
         axs[i].set_axis_off()
     fig.show()
     plt.show()
-
-
-
-
 
 
 
@@ -88,7 +115,6 @@ preprocess = transforms.Compose(
 )
 
 def transform(examples):
-    # print("Aaa ", examples["image"][0])
     images = [preprocess(image.convert("RGB")) for image in examples["image"]]
     return {"images": images}
 
@@ -109,47 +135,6 @@ if shouldPlot:
 import torch
 
 train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
-
-
-if False:
-    import PIL
-    import numpy as np
-    from datasets import Dataset
-
-    image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
-
-    plt.imshow(image)
-    plt.show()
-
-
-    # image_array = np.array(image)
-    data_dict = {"image": ([image]*5000)}
-    dataset = Dataset.from_dict(data_dict)
-    dataset.set_format(type="numpy")
-
-    preprocess = transforms.Compose(
-        [
-            transforms.Resize((config.image_size, config.image_size)),
-            # transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]),
-        ]
-    )
-
-    def transform(examples):
-        images = [preprocess(image.convert("RGB")) for image in examples["image"]]
-        return {"images": images}
-
-    dataset.set_transform(transform)
-
-    train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
-
-    fig, axs = plt.subplots(1, 4, figsize=(16, 4))
-    for i, image in enumerate(dataset[:1]["images"]):
-        axs[i].imshow(image.permute(1, 2, 0).numpy() / 2 + 0.5)
-        axs[i].set_axis_off()
-    fig.show()
-    plt.show()
 
 
 from diffusers import UNet2DModel
@@ -179,19 +164,15 @@ model = UNet2DModel(
       ),
 )
 
-print("XXX : ", dataset[0]['images'])
 sample_image = dataset[0]['images'].unsqueeze(0)
-# print('Input shape:', sample_image.shape)
-# print('Output shape:', model(sample_image, timestep=0).sample.shape)
 
 
 
 # Noise Scheduler
 
-from diffusers import DDIMScheduler
+from diffusers import DDPMScheduler
 
-noise_scheduler = DDIMScheduler(num_train_timesteps=1000)
-# noise_scheduler = DDIMScheduler(num_train_timesteps=200)
+noise_scheduler = DDPMScheduler(num_train_timesteps=200)
 
 
 
@@ -234,7 +215,7 @@ lr_scheduler = get_cosine_schedule_with_warmup(
 
 
 
-from diffusers import DDIMPipeline
+from diffusers import DDPMPipeline
 
 import math
 import os
@@ -252,6 +233,7 @@ def evaluate(config, epoch, pipeline):
     images = pipeline(
         batch_size = config.eval_batch_size, 
         generator=torch.manual_seed(config.seed),
+        num_inference_steps = 200
     ).images
 
     # Make a grid out of the images
@@ -311,6 +293,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
     start_epoch = 0
     if resume_from_checkpoint and os.path.isdir(config.output_dir):
         start_epoch = load_checkpoint(config.output_dir, model, noise_scheduler, optimizer, lr_scheduler)
+
 
     # Initialize accelerator and tensorboard logging
     accelerator = Accelerator(
@@ -373,7 +356,8 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
 
         # After each epoch you optionally sample some demo images with evaluate() and save the model
         if accelerator.is_main_process:
-            pipeline = DDIMPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
+            accelerator.wait_for_everyone()
+            pipeline = DDPMPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
 
             if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_epochs - 1:
                 evaluate(config, epoch, pipeline)
