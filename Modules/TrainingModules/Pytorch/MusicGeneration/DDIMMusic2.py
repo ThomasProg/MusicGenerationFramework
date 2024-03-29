@@ -110,14 +110,31 @@ import torch
 
 train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
 
+from PyMIDIMusic import *
+from PyMIDIMusic import MIDIToVector
 
 if True:
     import PIL
     import numpy as np
     from datasets import Dataset
 
-    image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
+    music, test, tokens = MIDIToVector.GetTokens()
+    tokens.pop()
+
+    grid = np.array(tokens).reshape((252, 16))
+    MIDIToVector.DisplayMusicRhythm(grid)
+
+
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            grid[i][j] *= 255
+
+    # image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
+
+    image = PIL.Image.fromarray(grid)
     image = image.convert("L")
+
+    image.crop((0, 0, image.width, image.width))
 
     plt.imshow(image)
     plt.show()
@@ -273,7 +290,7 @@ def evaluate(config, epoch, pipeline):
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=4, cols=4)
+    image_grid = make_grid(images, rows=1, cols=1)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
