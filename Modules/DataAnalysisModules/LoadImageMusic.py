@@ -2,8 +2,9 @@ from PIL import Image
 from PyMIDIMusic import *
 import numpy as np
 
-img = Image.open("Assets/Models/ddim-music/samples/0044.png")
-# img = Image.open("Assets/Models/ddim-music/truth/0000.png")
+img = Image.open("Assets/Models/ddim-music-16/samples/0012.png")
+# img = Image.open("Assets/Models/ddim-music-16/truth/0000.png")
+# img = Image.open("Assets/Models/ddim-music-full/truth/0000.png")
 
 img = img.convert("L")
 
@@ -39,7 +40,8 @@ for line in range(height):
         noteOnOff.SetDuration(10)
 
         p = pixels[pixel, line]
-        note = int(float(p) / 255 * 127)
+        # note = int(float(p) / 255 * 127)
+        note = int(p)
         print(note)
         if (note > 40):
             noteOnOff.SetKey(note)

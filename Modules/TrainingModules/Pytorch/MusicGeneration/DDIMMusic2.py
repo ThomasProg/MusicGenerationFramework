@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 @dataclass
 class TrainingConfig:
-    image_size = 32  # the generated image resolution
+    image_size = 16  # the generated image resolution
     train_batch_size = 16
     eval_batch_size = 16  # how many images to sample during evaluation
     num_epochs = 50
@@ -23,7 +23,7 @@ class TrainingConfig:
     save_image_epochs = 1
     save_model_epochs = 1
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/ddim-flowers-32'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/ddim-music-16'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
@@ -89,7 +89,7 @@ preprocess = transforms.Compose(
 
 def transform(examples):
     # print("Aaa ", examples["image"][0])
-    images = [preprocess(image.convert("L")) for image in examples["image"]]
+    images = [preprocess(image) for image in examples["image"]]
     return {"images": images}
 
 dataset.set_transform(transform)
@@ -125,16 +125,22 @@ if True:
     MIDIToVector.DisplayMusicRhythm(grid)
 
 
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            grid[i][j] *= 255
+    # for i in range(len(grid)):
+    #     for j in range(len(grid[i])):
+    #         grid[i][j] *= 255
 
     # image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
 
-    image = PIL.Image.fromarray(grid)
-    image = image.convert("L")
+    image = PIL.Image.fromarray(np.uint8(grid), "L")
+    print("frgdt")
+    plt.imshow(image)
+    plt.show()
+    # image = image.convert("L")
 
-    image.crop((0, 0, image.width, image.width))
+    image = image.crop((0, 0, image.width, image.width))
+
+    print("width: ", image.width)
+    print("height: ", image.height)
 
     plt.imshow(image)
     plt.show()
@@ -147,7 +153,7 @@ if True:
 
     preprocess = transforms.Compose(
         [
-            transforms.Resize((config.image_size, config.image_size)),
+            # transforms.Resize((config.image_size, config.image_size)),
             # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
@@ -155,7 +161,7 @@ if True:
     )
 
     def transform(examples):
-        images = [preprocess(image.convert("L")) for image in examples["image"]]
+        images = [preprocess(image) for image in examples["image"]]
         return {"images": images}
 
     dataset.set_transform(transform)
@@ -195,10 +201,10 @@ model = UNet2DModel(
     in_channels=1,  # the number of input channels, 3 for RGB images
     out_channels=1,  # the number of output channels
     layers_per_block=2,  # how many ResNet layers to use per UNet block
-    block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channes for each UNet block
+    block_out_channels=(128, 256, 256, 512, 512),  # the number of output channes for each UNet block
     down_block_types=( 
         "DownBlock2D",  # a regular ResNet downsampling block
-        "DownBlock2D", 
+        # "DownBlock2D", 
         "DownBlock2D", 
         "DownBlock2D", 
         "AttnDownBlock2D",  # a ResNet downsampling block with spatial self-attention
@@ -209,7 +215,7 @@ model = UNet2DModel(
         "AttnUpBlock2D",  # a ResNet upsampling block with spatial self-attention
         "UpBlock2D", 
         "UpBlock2D", 
-        "UpBlock2D", 
+        # "UpBlock2D", 
         "UpBlock2D"  
       ),
 )

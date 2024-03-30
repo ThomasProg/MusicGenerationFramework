@@ -28,7 +28,7 @@ class TrainingConfig:
     # image_height = 64
     image_height = 16
 
-    image_scale = 4
+    image_scale = 1
 
     train_batch_size = 16
     eval_batch_size = 16  # how many images to sample during evaluation
@@ -67,17 +67,24 @@ import matplotlib.pyplot as plt
 from datasets import Dataset
 from torchvision import transforms
 
-music, test, tokens = MIDIToVector.GetTokens()
+# music, test, tokens = MIDIToVector.GetTokens()
 
 # music.Play("Assets/Soundfonts/Touhou/Touhou.sf2")
 # while(True):
 #     pass
 
-print("Min : ", test.minPitch)
-print("Max : ", test.maxPitch)
+# print("Min : ", test.minPitch)
+# print("Max : ", test.maxPitch)
 
-tokens.pop()
-grid = np.array(tokens).reshape((252, 16))
+# tokens.pop()
+
+img = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
+# img = Image.open("Assets/Models/ddim-music/samples/0044.png")
+img = img.convert("L")
+
+grid = np.array(img)#.reshape((252, 16))
+# grid = np.array(tokens).reshape((252, 16))
+
 # grid = np.zeros(shape=(252, 16))
 
 MIDIToVector.DisplayMusicRhythm(grid)
@@ -100,27 +107,22 @@ if (config.image_height > image.height):
     padding_needed = (0,0,config.image_width - image.width, config.image_height - image.height)
     preprocess = transforms.Compose(
         [
-            # transforms.Resize((config.image_size, config.image_size)),
-            # transforms.Resize((config.image_width, config.image_height)),
-            transforms.Pad(padding=padding_needed, fill=0),
-            # transforms.RandomHorizontalFlip(),
+            transforms.Resize((config.image_width, config.image_height)),
+            # transforms.Pad(padding=padding_needed, fill=0),
             transforms.ToTensor(),
-            # transforms.Normalize([0.5], [0.5]),
         ]
     )
 
 else:
     preprocess = transforms.Compose(
         [
-            # transforms.Resize((config.image_size, config.image_size)),
-            # transforms.Resize((config.image_width, config.image_height)),
-            # transforms.TenCrop(padding=padding_needed, fill=0),
-            transforms.Lambda(lambda x: transforms.functional.crop(x, 0, 0, config.image_height, x.width)),  # Crop from the bottom
-            # transforms.functional.crop(0, 0, image.height - config.image_height, image.width),  # Crop from the bottom
-            # transforms.RandomHorizontalFlip(),
+            # transforms.Lambda(lambda x: transforms.functional.crop(x, 0, 0, config.image_height, x.width)),  # Crop from the bottom
             # transforms.Resize((config.image_height * config.image_scale, config.image_width * config.image_scale)),
+            
+            transforms.Resize((config.image_width, config.image_height)),
+            
             transforms.ToTensor(),
-            # transforms.Normalize([0.5], [0.5]),
+
         ]
     )
 
