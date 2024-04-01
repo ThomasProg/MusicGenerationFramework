@@ -2,11 +2,14 @@ from PIL import Image
 from PyMIDIMusic import *
 import numpy as np
 
+# img = Image.open("Assets/Models/ddim-music-16/samples/0004.png")
 img = Image.open("Assets/Models/ddim-music-16/samples/0012.png")
-# img = Image.open("Assets/Models/ddim-music-16/truth/0000.png")
+# img = Image.open("Assets/Models/ddim-music-16/datasetInput/0000.png")
+# img = Image.open("Assets/Models/ddim-music-16/inputMusic/0000.png")
+
 # img = Image.open("Assets/Models/ddim-music-full/truth/0000.png")
 
-img = img.convert("L")
+# img = img.convert("L")
 
 import matplotlib.pyplot as plt
 
@@ -18,7 +21,7 @@ width, height = img.size
 
 # Load the image data
 pixels = img.load()
-# data = np.array(img)
+data = np.array(img)
 
 
 # music = MIDIMusic()
@@ -31,6 +34,22 @@ pixels = img.load()
 
 # print("shape : ", data.shape)
 # print(data)
+
+# Boolean mask for values greater than or equal to the threshold
+mask = data >= 40
+
+# Apply the mask to the array
+data = data[mask]
+
+# Get the minimum value in the array
+min_value = np.min(data)
+
+# Get the maximum value in the array
+max_value = np.max(data)
+
+print("Minimum value:", min_value)
+print("Maximum value:", max_value)
+
 
 music = MIDIMusic() 
 music.SetTicksPerQuarterNote(16)
