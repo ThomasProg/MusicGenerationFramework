@@ -3,8 +3,9 @@ from PyMIDIMusic import *
 import numpy as np
 
 # img = Image.open("Assets/Models/ddim-music-16/samples/0004.png")
-img = Image.open("Assets/Models/ddim-music-16/samples/0012.png")
-# img = Image.open("Assets/Models/ddim-music-16/datasetInput/0000.png")
+# img = Image.open("Assets/Models/ddim-music-16/samples/0008.png")
+# img = Image.open("Assets/Models/ddim-music-16-remapping/samples/0009.png")
+img = Image.open("Assets/Models/ddim-music-16/datasetInput/0000.png")
 # img = Image.open("Assets/Models/ddim-music-16/inputMusic/0000.png")
 
 # img = Image.open("Assets/Models/ddim-music-full/truth/0000.png")
@@ -59,10 +60,11 @@ for line in range(height):
         noteOnOff.SetDuration(10)
 
         p = pixels[pixel, line]
+        p = np.interp(p, (0, 255), (40, 90))
         # note = int(float(p) / 255 * 127)
         note = int(p)
         print(note)
-        if (note > 40):
+        if (note > 50):
             noteOnOff.SetKey(note)
             noteOnOff.SetVelocity(120)
         else:

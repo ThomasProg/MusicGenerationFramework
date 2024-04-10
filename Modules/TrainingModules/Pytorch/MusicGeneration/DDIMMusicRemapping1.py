@@ -10,7 +10,7 @@ from dataclasses import dataclass
 class TrainingConfig:
     image_size = 16  # the generated image resolution
     train_batch_size = 16
-    eval_batch_size = 16  # how many images to sample during evaluation
+    eval_batch_size = 1  # how many images to sample during evaluation
     num_epochs = 50
     gradient_accumulation_steps = 1
     learning_rate = 1e-4
@@ -18,7 +18,7 @@ class TrainingConfig:
     save_image_epochs = 1
     save_model_epochs = 1
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/ddim-music-16'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/ddim-music-16-remapping'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
@@ -39,9 +39,32 @@ import torch
 
 import Helpers.LoadDataset
 
+import numpy as np
+
+def remapArray(array):
+    npArray = array.numpy().astype(np.float32)
+    # array = np.asarray(image, dtype=np.float32)
+
+    flat = npArray.flatten()
+    # Get the minimum value in the array
+    min_value = np.min(flat[flat > 0.01])
+
+    # Get the maximum value in the array
+    max_value = np.max(flat)
+
+    # Remap the value from the input range to the output range
+    # remapped_value = np.interp(npArray, (0.15, 0.3), (0, 1))
+    remapped_value = np.interp(npArray, (40.0/256, 80/256), (0, 1))
+
+    # Clamp the remapped value to the output range
+    clamped_remapped_value = np.clip(remapped_value, 0, 1)
+
+    return torch.from_numpy(clamped_remapped_value.astype(np.float32))
+
 preprocess = transforms.Compose(
     [
         transforms.ToTensor(),
+        transforms.Lambda(remapArray),
         transforms.Normalize([0.5], [0.5]),
     ]
 )

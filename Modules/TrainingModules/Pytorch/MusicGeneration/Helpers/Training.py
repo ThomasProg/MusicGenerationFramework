@@ -9,9 +9,12 @@ import torch
 from diffusers import DDIMPipeline
 import torch.nn.functional as F
 
+import PIL
+import numpy as np
+
 def make_grid(images, rows, cols):
     w, h = images[0].size
-    grid = Image.new('L', size=(cols*w, rows*h))
+    grid = PIL.Image.new('L', size=(cols*w, rows*h))
     for i, image in enumerate(images):
         grid.paste(image, box=(i%cols*w, i//cols*h))
     return grid
@@ -22,21 +25,33 @@ def evaluate(config, epoch, pipeline):
     images = pipeline(
         batch_size = config.eval_batch_size, 
         generator=torch.manual_seed(config.seed),
+        output_type = "np.array"
     ).images
 
     # for i in range(len(images)):
     #     print("im", np.asarray(images[i]))
     #     images[i] = unnormalize_image(images[i], 0.5, 0.5)
 
-    # Make a grid out of the images
-    image_grid = make_grid(images, rows=1, cols=1)
 
-    # Save the images
+
+
+    # # Make a grid out of the images
+    # # image_grid = make_grid(images, rows=(1 + config.eval_batch_size / 4), cols=4)
+    # image_grid = make_grid(images, rows=1, cols=1)
+
+    # # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
     os.makedirs(test_dir, exist_ok=True)
-    image_grid.save(f"{test_dir}/{epoch:04d}.png")
+    # image_grid.save(f"{test_dir}/{epoch:04d}.png")
 
-    
+
+
+
+
+    # for (j,i),imageArray in np.ndenumerate(images):
+    if (len(images) == 1):
+        images[0].tofile(f"{test_dir}/{epoch:04d}.floatarray")
+
 
 def get_full_repo_name(model_id: str, organization: str = None, token: str = None):
     if token is None:

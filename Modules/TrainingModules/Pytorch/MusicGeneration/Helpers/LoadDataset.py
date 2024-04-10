@@ -5,7 +5,9 @@ import PIL
 import numpy as np
 from datasets import Dataset
 
-def loadImage():
+import torch
+
+def loadImage(config):
     music, test, tokens = MIDIToVector.GetTokens()
     tokens.pop()
 
@@ -34,8 +36,10 @@ def loadImage():
 
     return image
 
-def loadDataset(preprocess):
-    image = loadImage()
+def loadDataset(config, preprocess):
+    image = loadImage(config)
+
+    # image = np.asarray(image)
 
     data_dict = {"image": ([image]*5000)}
     dataset = Dataset.from_dict(data_dict)
