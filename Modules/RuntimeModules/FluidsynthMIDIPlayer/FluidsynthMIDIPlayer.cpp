@@ -52,6 +52,15 @@ void FluidsynthMIDIPlayer::OnPitchBend(const PitchBend& pitchBend)
     fluid_synth_pitch_bend(synth, pitchBend.channel, pitchBend.value);
 }
 
+void FluidsynthMIDIPlayer::Stop()
+{
+    // Iterate over all MIDI channels
+    for (int channel = 0; channel < 16; channel++) {
+        // Send "All Notes Off" control change message
+        fluid_synth_cc(synth, channel, 123, 0);
+    }
+}
+
 FluidsynthMIDIPlayer* FluidsynthMIDIPlayer_Create()
 {
     return new FluidsynthMIDIPlayer();

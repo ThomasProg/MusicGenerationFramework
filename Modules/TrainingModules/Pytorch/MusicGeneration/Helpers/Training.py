@@ -39,7 +39,7 @@ def evaluate(config, epoch, pipeline):
     # # image_grid = make_grid(images, rows=(1 + config.eval_batch_size / 4), cols=4)
     # image_grid = make_grid(images, rows=1, cols=1)
 
-    # # Save the images
+    # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
     os.makedirs(test_dir, exist_ok=True)
     # image_grid.save(f"{test_dir}/{epoch:04d}.png")
@@ -134,7 +134,12 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
             with accelerator.accumulate(model):
                 # Predict the noise residual
                 noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
-                loss = F.mse_loss(noise_pred, noise)
+                if (config.loss_function != None):
+                    loss = config.loss_function(noise_pred, noise)
+                else:
+                    loss = F.mse_loss(noise_pred, noise)
+
+                # loss = F.mse_loss(noise_pred, noise)
                 accelerator.backward(loss)
 
                 accelerator.clip_grad_norm_(model.parameters(), 1.0)

@@ -3,7 +3,7 @@
 
 # Steps :
 # 1. Load a midi file
-# 2. Convert it into an image
+# 2. Convert it numpy nd array
 # 3. Build a dataset
 # 4. Convert to tensor
 # 5. Remap values to only have a subrange
@@ -25,7 +25,7 @@ class TrainingConfig:
     save_image_epochs = 1
     save_model_epochs = 1
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/ddim-music-16-remapping'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/ddim-music-16-remapping2'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
@@ -53,24 +53,56 @@ def remapArray(array):
     # array = np.asarray(image, dtype=np.float32)
 
     # Remap the value from the input range to the output range
-    # remapped_value = np.interp(npArray, (0.15, 0.3), (0, 1))
-    remapped_value = np.interp(npArray, (40.0/256, 80.0/256.0), (0, 1))
+    remapped_value = np.interp(npArray, (40.0, 80.0), (0.0, 1.0))
 
     # Clamp the remapped value to the output range
-    clamped_remapped_value = np.clip(remapped_value, 0, 1)
+    clamped_remapped_value = np.clip(remapped_value, 0.0, 1.0)
 
-    print(clamped_remapped_value)
 
     return torch.from_numpy(clamped_remapped_value.astype(np.float32))
 
+def toNdArray(array):
+    return np.array(array)
+
 preprocess = transforms.Compose(
     [
+        transforms.Lambda(toNdArray),
         transforms.ToTensor(),
         transforms.Lambda(remapArray),
         transforms.Normalize([0.5], [0.5]),
     ]
 )
-dataset, train_dataloader = Helpers.LoadDataset.loadDataset(config, preprocess)
+
+from datasets import Dataset
+from PyMIDIMusic import MIDIToVector
+
+def loadDataset(config, preprocess):
+    music, test, tokens = MIDIToVector.GetTokens()
+    tokens.pop()
+    flat = np.array(tokens)
+    grid = flat.reshape((252, 16))
+
+    grid = grid[0:16, 0:16]
+
+    # Convert the list to a NumPy array
+    new_array = np.array(grid)
+
+    data_dict = {"image": ([new_array]*5000)}
+    dataset = Dataset.from_dict(data_dict)
+    dataset.set_format(type="numpy")
+
+    def transform(examples):
+        images = [preprocess(image) for image in examples["image"]]
+        return {"images": images}
+
+    dataset.set_transform(transform)
+
+    train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.train_batch_size, shuffle=True)
+
+    return dataset, train_dataloader
+
+
+dataset, train_dataloader = loadDataset(config, preprocess)
 
 import os
 

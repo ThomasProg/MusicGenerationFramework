@@ -15,6 +15,8 @@ void FluidsynthPlayerAsync::Stop()
     Super::Stop();
 
     playerFuture.wait();
+
+    fluidsynthPlayer.Stop();
 }
 
 class FluidsynthPlayerAsync* FluidsynthPlayerAsync_Create(class MIDIMusic* music, const char* soundfontPath)

@@ -23,6 +23,8 @@ public:
     virtual void OnProgramChange(const ProgramChange& programChange) override;
     virtual void OnControlChange(const ControlChange& controlChange) override;
     virtual void OnPitchBend(const PitchBend& pitchBend) override;
+
+    void Stop();
 };
 
 extern "C"
