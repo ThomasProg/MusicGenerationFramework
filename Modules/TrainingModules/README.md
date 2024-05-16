@@ -13,6 +13,14 @@ pip install accelerate
 in the PyMIDIMusic folder:
 pip install -v ./ 
 
+# Tips
+
+Most ML libraries (Pytorch, TensorFlow) do not support GPU training on Windows, and will only train on CPU.
+If you want the best performance and you are on windows, it is recommended to install linux on wsl for multi gpu training.
+It can multiply training speed by 20 times.
+
+
+
 
 
 
