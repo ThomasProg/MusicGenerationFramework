@@ -37,3 +37,6 @@ download_dataset(
     LakhMidi-full
     http://hog.ee.columbia.edu/craffel/lmd/lmd_full.tar.gz
 )
+
+# https://www.kaggle.com/datasets/imsparsh/lakh-midi-clean?resource=download
+# login and download manually

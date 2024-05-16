@@ -65,6 +65,7 @@ Prebuilt binaries include:
 - Clone through the command line.\
 Do not forget to clone the subrepositories.\
 `git clone --recursive https://github.com/ThomasProg/MusicGenerationFramework.git`
+`git submodule update --init`
 
 - Clone through a GUI Client (GithubDesktop, GitKraken, SourceTree...).
 
