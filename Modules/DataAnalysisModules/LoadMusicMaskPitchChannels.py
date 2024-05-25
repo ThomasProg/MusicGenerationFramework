@@ -3,7 +3,9 @@ import numpy as np
 
 # array = np.fromfile("Assets/Models/ddim-music-16-MaskPitchChannels/samples/0003.floatarray", dtype=np.float32)
 # array = np.fromfile("Assets/Models/ddim-music-16-MaskPitchChannels/truth.floatarray", dtype=np.float32)
-array = np.fromfile("Assets/Models/ddim-music-16-MaskPitchChannels/maskAndPitch.floatarray", dtype=np.float32)
+array = np.fromfile("Assets/Models/ddim-music-16-MaskPitchChannelsOpti/maskAndPitch.floatarray", dtype=np.float32)
+# array = np.fromfile("Assets/Models/ddim-music-16-MaskPitchChannelsOpti/samples/0002.floatarray", dtype=np.float32)
+
 array = array.reshape((16, 16, 2))
 # print(array)
 # print("f : ", np.interp(array, (0.0, 1.0), (40.0, 80.0)))
@@ -73,12 +75,13 @@ for line in range(height):
         # note = int(float(p) / 255 * 127)
 
         # note = int(p)
-        print(p)
+        # print(p)
         maskValue = int(p[0])
         note = int(p[1])
 
         # print(note)
         if (maskValue > 60):
+            # print(note)
             noteOnOff.SetKey(note)
             noteOnOff.SetVelocity(120)
         else:
