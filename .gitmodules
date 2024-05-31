@@ -16,3 +16,6 @@
 [submodule "Modules/RuntimeModules/imgui/imgui"]
 	path = Modules/RuntimeModules/imgui/imgui
 	url = git@github.com:ocornut/imgui.git
+[submodule "Modules/TrainingModules/Pytorch/MIDITransformerDiffusion"]
+	path = Modules/TrainingModules/Pytorch/MIDITransformerDiffusion
+	url = https://github.com/ThomasProg/MIDITransformerDiffusion
