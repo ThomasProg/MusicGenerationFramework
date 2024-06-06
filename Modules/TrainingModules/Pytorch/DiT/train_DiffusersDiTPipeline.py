@@ -23,7 +23,7 @@ class TrainingConfig:
     save_image_epochs = 1
     save_model_epochs = 1
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/ddim-flowers-32'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/dit-flowers-32'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
@@ -89,7 +89,7 @@ preprocess = transforms.Compose(
 
 def transform(examples):
     # print("Aaa ", examples["image"][0])
-    images = [preprocess(image.convert("RGB")) for image in examples["image"]]
+    images = [preprocess(image.convert("RGBA")) for image in examples["image"]]
     return {"images": images}
 
 dataset.set_transform(transform)
@@ -137,7 +137,7 @@ if True:
     )
 
     def transform(examples):
-        images = [preprocess(image.convert("RGB")) for image in examples["image"]]
+        images = [preprocess(image.convert("RGBA")) for image in examples["image"]]
         return {"images": images}
 
     dataset.set_transform(transform)
@@ -155,31 +155,46 @@ if True:
 from diffusers import UNet2DModel
 
 
-model = UNet2DModel(
-    sample_size=config.image_size,  # the target image resolution
-    in_channels=3,  # the number of input channels, 3 for RGB images
-    out_channels=3,  # the number of output channels
-    layers_per_block=2,  # how many ResNet layers to use per UNet block
-    block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channes for each UNet block
-    down_block_types=( 
-        "DownBlock2D",  # a regular ResNet downsampling block
-        "DownBlock2D", 
-        "DownBlock2D", 
-        "DownBlock2D", 
-        "AttnDownBlock2D",  # a ResNet downsampling block with spatial self-attention
-        "DownBlock2D",
-    ), 
-    up_block_types=(
-        "UpBlock2D",  # a regular ResNet upsampling block
-        "AttnUpBlock2D",  # a ResNet upsampling block with spatial self-attention
-        "UpBlock2D", 
-        "UpBlock2D", 
-        "UpBlock2D", 
-        "UpBlock2D"  
-      ),
-)
+# model = UNet2DModel(
+#     sample_size=config.image_size,  # the target image resolution
+#     in_channels=3,  # the number of input channels, 3 for RGB images
+#     out_channels=3,  # the number of output channels
+#     layers_per_block=2,  # how many ResNet layers to use per UNet block
+#     block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channes for each UNet block
+#     down_block_types=( 
+#         "DownBlock2D",  # a regular ResNet downsampling block
+#         "DownBlock2D", 
+#         "DownBlock2D", 
+#         "DownBlock2D", 
+#         "AttnDownBlock2D",  # a ResNet downsampling block with spatial self-attention
+#         "DownBlock2D",
+#     ), 
+#     up_block_types=(
+#         "UpBlock2D",  # a regular ResNet upsampling block
+#         "AttnUpBlock2D",  # a ResNet upsampling block with spatial self-attention
+#         "UpBlock2D", 
+#         "UpBlock2D", 
+#         "UpBlock2D", 
+#         "UpBlock2D"  
+#       ),
+# )
 
-print("XXX : ", dataset[0]['images'])
+from diffusers import AutoencoderKL, DiTTransformer2DModel
+
+dit_transformer = DiTTransformer2DModel(sample_size=32, in_channels=4, out_channels=4, num_attention_heads=4, num_layers=3)
+# dit_transformer.config.out_channels = 3
+dit_transformer = dit_transformer.to("cuda")
+# dit_transformer.config
+
+# autoencoder = AutoencoderKL(input_dim=64*64*3, latent_dim=128)
+# autoencoder = AutoencoderKL(sample_size=32, in_channels=3, out_channels=3, latent_channels=3)
+url = "https://huggingface.co/stabilityai/sd-vae-ft-mse-original/blob/main/vae-ft-mse-840000-ema-pruned.safetensors"  # can also be a local file
+autoencoder = AutoencoderKL.from_single_file(url)
+# autoencoder = AutoencoderKL.from_pretrained("stabilityai/stable-diffusion-v1-4")
+autoencoder = autoencoder.to("cuda")
+
+
+# print("XXX : ", dataset[0]['images'])
 sample_image = dataset[0]['images'].unsqueeze(0)
 # print('Input shape:', sample_image.shape)
 # print('Output shape:', model(sample_image, timestep=0).sample.shape)
@@ -213,16 +228,19 @@ if shouldPlot:
 
 import torch.nn.functional as F
 
-noise_pred = model(noisy_image, timesteps).sample
-loss = F.mse_loss(noise_pred, noise)
+# noise_pred = model(noisy_image, timesteps).sample
+# loss = F.mse_loss(noise_pred, noise)
 
+import torch.nn as nn
+loss = criterion = nn.MSELoss()
 
 
 
 
 # Training
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
+# optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
+optimizer = torch.optim.AdamW(list(dit_transformer.parameters()) + list(autoencoder.parameters()), lr=config.learning_rate)
 
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
@@ -234,8 +252,8 @@ lr_scheduler = get_cosine_schedule_with_warmup(
 
 
 
-from diffusers import DDIMPipeline
-# from customDiTPipeline import DDIMPipeline
+# from diffusers import DDIMPipeline
+from diffusers import DiTPipeline
 
 import math
 import os
@@ -251,12 +269,14 @@ def evaluate(config, epoch, pipeline):
     # Sample some images from random noise (this is the backward diffusion process).
     # The default pipeline output type is `List[PIL.Image]`
     images = pipeline(
-        batch_size = config.eval_batch_size, 
-        generator=torch.manual_seed(config.seed),
+        class_labels = torch.tensor([1]).to("cuda"),
+        num_inference_steps=25,
+        # batch_size = config.eval_batch_size, 
+        generator=torch.manual_seed(config.seed)
     ).images
 
     # Make a grid out of the images
-    image_grid = make_grid(images, rows=4, cols=4)
+    image_grid = make_grid(images, rows=1, cols=1)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
@@ -344,6 +364,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
 
         for step, batch in enumerate(train_dataloader):
             clean_images = batch['images']
+            clean_images = clean_images.to("cuda")
             # Sample noise to add to the images
             noise = torch.randn(clean_images.shape).to(clean_images.device)
             bs = clean_images.shape[0]
@@ -357,7 +378,8 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
             
             with accelerator.accumulate(model):
                 # Predict the noise residual
-                noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
+                labels = torch.full(tuple([noisy_images.shape[0]]), 1).to(clean_images.device)
+                noise_pred = model(hidden_states=noisy_images, timestep=timesteps, class_labels = labels, return_dict=False)[0]
                 loss = F.mse_loss(noise_pred, noise)
                 accelerator.backward(loss)
 
@@ -374,7 +396,9 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
 
         # After each epoch you optionally sample some demo images with evaluate() and save the model
         if accelerator.is_main_process:
-            pipeline = DDIMPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
+            # pipeline = DiTPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
+            # pipeline = DiTPipeline(unet=accelerator.unwrap_model(model), vae = None, scheduler=noise_scheduler)
+            pipeline = DiTPipeline(transformer=dit_transformer, vae=autoencoder, scheduler=noise_scheduler)
 
             if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_epochs - 1:
                 evaluate(config, epoch, pipeline)
@@ -391,7 +415,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
                 
 import accelerate
                     
-args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+args = (config, dit_transformer, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
 accelerate.notebook_launcher(train_loop, args, num_processes=1)
 

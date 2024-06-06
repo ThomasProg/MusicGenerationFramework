@@ -16,7 +16,7 @@ class TrainingConfig:
     image_size = 32  # the generated image resolution
     train_batch_size = 16
     eval_batch_size = 16  # how many images to sample during evaluation
-    num_epochs = 50
+    num_epochs = 200
     gradient_accumulation_steps = 1
     learning_rate = 1e-4
     lr_warmup_steps = 500
@@ -152,8 +152,8 @@ if False:
     plt.show()
 
 
-from diffusers import UNet2DModel
-
+# from diffusers import UNet2DModel
+from diffusers import DiTTransformer2DModel
 
 # model = UNet2DModel(
 #     sample_size=config.image_size,  # the target image resolution
@@ -179,19 +179,13 @@ from diffusers import UNet2DModel
 #       ),
 # )
 
-from diffusers import AutoencoderKL, DiTTransformer2DModel
+# dit_transformer = DiTTransformer2DModel(sample_size=config.image_size, in_channels=3, out_channels=3, num_attention_heads=4, num_layers=3)
+dit_transformer = DiTTransformer2DModel(sample_size=config.image_size, in_channels=3, out_channels=3, num_attention_heads=6, num_layers=12)
+# dit_transformer = dit_transformer.to("cuda")
 
-dit_transformer = DiTTransformer2DModel(sample_size=32, in_channels=3, out_channels=3, num_attention_heads=4, num_layers=3)
-# dit_transformer.config.out_channels = 3
-dit_transformer.to("cuda")
-# dit_transformer.config
+model = dit_transformer
 
-# autoencoder = AutoencoderKL(input_dim=64*64*3, latent_dim=128)
-autoencoder = AutoencoderKL(sample_size=32, in_channels=3, out_channels=3, latent_channels=3)
-autoencoder.to("cuda")
-
-
-# print("XXX : ", dataset[0]['images'])
+print("XXX : ", dataset[0]['images'])
 sample_image = dataset[0]['images'].unsqueeze(0)
 # print('Input shape:', sample_image.shape)
 # print('Output shape:', model(sample_image, timestep=0).sample.shape)
@@ -232,12 +226,9 @@ import torch.nn as nn
 loss = criterion = nn.MSELoss()
 
 
-
-
 # Training
 
-# optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
-optimizer = torch.optim.AdamW(list(dit_transformer.parameters()) + list(autoencoder.parameters()), lr=config.learning_rate)
+optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
@@ -250,7 +241,7 @@ lr_scheduler = get_cosine_schedule_with_warmup(
 
 
 # from diffusers import DDIMPipeline
-from diffusers import DiTPipeline
+from customDiTPipeline import DDIMPipeline
 
 import math
 import os
@@ -265,15 +256,29 @@ def make_grid(images, rows, cols):
 def evaluate(config, epoch, pipeline):
     # Sample some images from random noise (this is the backward diffusion process).
     # The default pipeline output type is `List[PIL.Image]`
+
     images = pipeline(
         class_labels = torch.tensor([1]).to("cuda"),
         num_inference_steps=25,
         # batch_size = config.eval_batch_size, 
-        generator=torch.manual_seed(config.seed)
+        generator=torch.manual_seed(config.seed),
     ).images
 
     # Make a grid out of the images
     image_grid = make_grid(images, rows=1, cols=1)
+
+    
+    # images = []
+    # for i in range(2*2):
+    #     images.append(pipeline(
+    #     class_labels = torch.tensor([1]).to("cuda"),
+    #     num_inference_steps=25,
+    #     # batch_size = config.eval_batch_size, 
+    #     generator=torch.manual_seed(config.seed + i*100),
+    #     ).images[0])
+
+    # # Make a grid out of the images
+    # image_grid = make_grid(images, rows=2, cols=2)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")
@@ -361,7 +366,6 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
 
         for step, batch in enumerate(train_dataloader):
             clean_images = batch['images']
-            clean_images.to("cuda")
             # Sample noise to add to the images
             noise = torch.randn(clean_images.shape).to(clean_images.device)
             bs = clean_images.shape[0]
@@ -376,7 +380,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
             with accelerator.accumulate(model):
                 # Predict the noise residual
                 labels = torch.full(tuple([noisy_images.shape[0]]), 1).to(clean_images.device)
-                noise_pred = model(hidden_states=noisy_images, timestep=timesteps, class_labels = labels, return_dict=False)[0]
+                noise_pred = model(noisy_images, timesteps, class_labels = labels, return_dict=False)[0]
                 loss = F.mse_loss(noise_pred, noise)
                 accelerator.backward(loss)
 
@@ -393,9 +397,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
 
         # After each epoch you optionally sample some demo images with evaluate() and save the model
         if accelerator.is_main_process:
-            # pipeline = DiTPipeline(unet=accelerator.unwrap_model(model), scheduler=noise_scheduler)
-            # pipeline = DiTPipeline(unet=accelerator.unwrap_model(model), vae = None, scheduler=noise_scheduler)
-            pipeline = DiTPipeline(transformer=dit_transformer, vae=autoencoder, scheduler=noise_scheduler)
+            pipeline = DDIMPipeline(transformer=accelerator.unwrap_model(model), scheduler=noise_scheduler)
 
             if (epoch + 1) % config.save_image_epochs == 0 or epoch == config.num_epochs - 1:
                 evaluate(config, epoch, pipeline)
@@ -412,7 +414,7 @@ def train_loop(config, model, noise_scheduler, optimizer: torch.optim.Optimizer,
                 
 import accelerate
                     
-args = (config, dit_transformer, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
+args = (config, model, noise_scheduler, optimizer, train_dataloader, lr_scheduler)
 
 accelerate.notebook_launcher(train_loop, args, num_processes=1)
 
