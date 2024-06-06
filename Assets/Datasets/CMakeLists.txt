@@ -40,3 +40,9 @@ download_dataset(
 
 # https://www.kaggle.com/datasets/imsparsh/lakh-midi-clean?resource=download
 # login and download manually
+
+
+
+# Flowers 102 - Oxford
+# https://www.robots.ox.ac.uk/~vgg/data/flowers/102/
+# Direct Download: https://www.robots.ox.ac.uk/~vgg/data/flowers/102/102flowers.tgz
