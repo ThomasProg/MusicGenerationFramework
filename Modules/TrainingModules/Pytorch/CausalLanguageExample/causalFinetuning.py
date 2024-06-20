@@ -2,7 +2,7 @@
 
 
 import os
-os.environ["HF_TOKEN"] = ""
+os.environ["HF_TOKEN"] = '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'
 
 
 

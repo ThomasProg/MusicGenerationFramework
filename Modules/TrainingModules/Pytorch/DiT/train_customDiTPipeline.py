@@ -13,17 +13,17 @@ from dataclasses import dataclass
 
 @dataclass
 class TrainingConfig:
-    image_size = 32  # the generated image resolution
-    train_batch_size = 16
-    eval_batch_size = 16  # how many images to sample during evaluation
-    num_epochs = 200
+    image_size = 16  # the generated image resolution
+    train_batch_size = 128
+    eval_batch_size = 128  # how many images to sample during evaluation
+    num_epochs = 1000
     gradient_accumulation_steps = 1
-    learning_rate = 1e-4
+    learning_rate = 3e-4
     lr_warmup_steps = 500
     save_image_epochs = 1
     save_model_epochs = 1
     mixed_precision = 'fp16'  # `no` for float32, `fp16` for automatic mixed precision
-    output_dir = 'Assets/Models/dit-flowers-32'  # the model namy locally and on the HF Hub
+    output_dir = 'Assets/Models/dit-flowers-16'  # the model namy locally and on the HF Hub
 
     push_to_hub = False  # whether to upload the saved model to the HF Hub
     hub_private_repo = False  
@@ -117,13 +117,14 @@ if False:
     from datasets import Dataset
 
     image = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00001.jpg")
+    image2 = PIL.Image.open("Assets/Datasets/Flowers102/flowers-102/jpg/image_00003.jpg")
 
     plt.imshow(image)
     plt.show()
 
 
     # image_array = np.array(image)
-    data_dict = {"image": ([image]*5000)}
+    data_dict = {"image": ([image, image2]*2500)}
     dataset = Dataset.from_dict(data_dict)
     dataset.set_format(type="numpy")
 
@@ -180,7 +181,7 @@ from diffusers import DiTTransformer2DModel
 # )
 
 # dit_transformer = DiTTransformer2DModel(sample_size=config.image_size, in_channels=3, out_channels=3, num_attention_heads=4, num_layers=3)
-dit_transformer = DiTTransformer2DModel(sample_size=config.image_size, in_channels=3, out_channels=3, num_attention_heads=6, num_layers=12)
+dit_transformer = DiTTransformer2DModel(sample_size=config.image_size, in_channels=3, out_channels=3, num_attention_heads=4, num_layers=12)
 # dit_transformer = dit_transformer.to("cuda")
 
 model = dit_transformer
@@ -257,28 +258,28 @@ def evaluate(config, epoch, pipeline):
     # Sample some images from random noise (this is the backward diffusion process).
     # The default pipeline output type is `List[PIL.Image]`
 
-    images = pipeline(
-        class_labels = torch.tensor([1]).to("cuda"),
-        num_inference_steps=25,
-        # batch_size = config.eval_batch_size, 
-        generator=torch.manual_seed(config.seed),
-    ).images
-
-    # Make a grid out of the images
-    image_grid = make_grid(images, rows=1, cols=1)
-
-    
-    # images = []
-    # for i in range(2*2):
-    #     images.append(pipeline(
+    # images = pipeline(
     #     class_labels = torch.tensor([1]).to("cuda"),
     #     num_inference_steps=25,
     #     # batch_size = config.eval_batch_size, 
-    #     generator=torch.manual_seed(config.seed + i*100),
-    #     ).images[0])
+    #     generator=torch.manual_seed(config.seed),
+    # ).images
 
     # # Make a grid out of the images
-    # image_grid = make_grid(images, rows=2, cols=2)
+    # image_grid = make_grid(images, rows=1, cols=1)
+
+    
+    images = []
+    for i in range(2*2):
+        images.append(pipeline(
+        class_labels = torch.tensor([1]).to("cuda"),
+        num_inference_steps=25,
+        # batch_size = config.eval_batch_size, 
+        generator=torch.manual_seed(config.seed + i*100),
+        ).images[0])
+
+    # Make a grid out of the images
+    image_grid = make_grid(images, rows=2, cols=2)
 
     # Save the images
     test_dir = os.path.join(config.output_dir, "samples")

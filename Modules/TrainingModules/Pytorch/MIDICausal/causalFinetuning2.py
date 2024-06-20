@@ -4,13 +4,38 @@
 import os
 os.environ["HF_TOKEN"] = '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'
 
+loadFromDisk = False
 
 
 from transformers import AutoModelForCausalLM, TrainingArguments, Trainer
 
 # Load Existing Model
 
-model = AutoModelForCausalLM.from_pretrained("distilbert/distilgpt2")
+# model = AutoModelForCausalLM.from_pretrained("distilbert/distilgpt2")
+
+from transformers import AutoModelForCausalLM, GPT2Config
+
+model = None
+
+if (loadFromDisk):
+    model = AutoModelForCausalLM.from_pretrained("MIDICausalFinetuning2/")
+else:
+    # Define the distilgpt2 model configuration
+    config = GPT2Config(
+        vocab_size=50257,
+        n_positions=1024,
+        n_ctx=1024,
+        n_embd=400,
+        n_layer=6,  # distilgpt2 has fewer layers than GPT-2
+        n_head=10,
+        bos_token_id=50256,
+        eos_token_id=50256
+    )
+
+    # Instantiate the model from the configuration
+    model = AutoModelForCausalLM.from_config(config)
+
+
 
 
 
@@ -37,23 +62,23 @@ tokenized_eli5 = eli5.map(
 
 from datasets import DatasetDict, Dataset
 
-# class CustomDataset(Dataset):
-#     _data = None
-#     def __init__(self, data, column_names):
-#         self._data = data
-#         self._column_names = column_names
-    
-#     def __len__(self):
-#         return len(self._data)
-    
-#     def __getitem__(self, idx):
-#         return self._data[idx]
-    
+midi_path = 'FurElise.mid'
 
-# train_dataset = CustomDataset([[2, 32, 1, 4], [1, 4, 34, 2]], column_names=["input_ids", "attention_mask"])
-# test_dataset = CustomDataset([[2, 32, 1, 4], [1, 4, 34, 2]], column_names=["input_ids", "attention_mask"])
+from midiTokenizer import MIDITokenizer
+from structuredTokenizer import MIDIStructuredTokenizer
 
-train_dataset = Dataset.from_dict({"input_ids": [[64, 62, 312, 2420, 4776, 2420, 62, 6371, 82], [64, 62, 312, 2420, 4776, 2420, 62, 6371, 82]], "attention_mask": [[1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1]]})
+
+midiTokenizer = MIDITokenizer()
+structuredTokenizer = MIDIStructuredTokenizer()
+
+s = structuredTokenizer.fileToText(midi_path)
+print(s)
+
+# encodedMIDI = tokenizer.encode(midiTokenizer.encode(midi_path))
+encodedMIDI = tokenizer.encode(s)
+
+# train_dataset = Dataset.from_dict({"input_ids": [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0]], "attention_mask": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0]]})
+train_dataset = Dataset.from_dict({"input_ids": [encodedMIDI], "attention_mask": [[1] * len(encodedMIDI)]})
 test_dataset = train_dataset
 
 
@@ -80,8 +105,8 @@ lm_dataset = datasetDict.map(group_texts, batched=True, num_proc=4)
 
 from transformers import DataCollatorForLanguageModeling
 
-tokenizer.pad_token = tokenizer.eos_token
-data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+# tokenizer.pad_token = tokenizer.eos_token
+# data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
 
 
@@ -93,6 +118,7 @@ training_args = TrainingArguments(
     learning_rate=2e-5,
     weight_decay=0.01,
     push_to_hub=True,
+    num_train_epochs = 100
 )
 
 trainer = Trainer(
@@ -100,7 +126,7 @@ trainer = Trainer(
     args=training_args,
     train_dataset=lm_dataset["train"],
     eval_dataset=lm_dataset["test"],
-    data_collator=data_collator,
+    # data_collator=data_collator,
 )
 
 trainer.train()
@@ -112,7 +138,7 @@ eval_results = trainer.evaluate()
 print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
 
 trainer.push_to_hub("MIDICausalFinetuning2")
-tokenizer.push_to_hub("MIDICausalFinetuning2")
+# tokenizer.push_to_hub("MIDICausalFinetuning2")
 
 
 
