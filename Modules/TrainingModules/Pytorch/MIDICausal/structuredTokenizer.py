@@ -3,62 +3,115 @@ import miditoolkit
 class MIDIStructuredTokenizer:
     addVelocity = False
 
+    vocab = {
+
+
+    }
+
+    timeShiftToken = 0
+    pitchToken = 0
+    durationToken = 0
+
     def __init__(self):
-        pass
+        self.generateVocab()
 
-    def fileToText(self, filename):
-        midi_obj = miditoolkit.MidiFile(filename)
-        notes = midi_obj.instruments[0].notes
-        # tokens = []
-        # for note in notes:
-        #     tokens.append((note.start, note.pitch, note.velocity, note.end - note.start))
-        # tokens.sort(key=lambda x: x[0])  # Ensure the tokens are in order of time
-        notes.sort(key=lambda x: x.start)
+    def generateVocab(self):
+        self.timeShiftToken = 0
+        self.vocab["TimeShift"] = self.timeShiftToken
 
-        text = ""
-        for i, note in enumerate(notes):
-            text += "Pitch:" + str(note.pitch) + "\n"
+        self.pitchToken = 1
+        self.vocab["Pitch"] = self.pitchToken
 
-            if (self.addVelocity):
-                text += "Velocity:" + str(note.velocity) + "\n"
+        self.durationToken = 2
+        self.vocab["Duration"] = self.durationToken
 
-            text += "Duration:" + str(note.end - note.start) + "\n"
+        for i in range(0, 127): 
+            self.vocab[str(i)] = i
 
-            if (i == 0):
-                text += "TimeShift:" + str(note.start) + "\n"
-            else:
-                text += "TimeShift:" + str(note.start - notes[i-1].start) + "\n"
 
-        return text
+    # def fileToText(self, filename):
+    #     midi_obj = miditoolkit.MidiFile(filename)
+    #     notes = midi_obj.instruments[0].notes
+    #     notes.sort(key=lambda x: x.start)
 
-    def encode(self, filename):
-        midi_obj = miditoolkit.MidiFile(filename)
-        notes = midi_obj.instruments[0].notes
-        # tokens = []
-        # for note in notes:
-        #     tokens.append((note.start, note.pitch, note.velocity, note.end - note.start))
-        # tokens.sort(key=lambda x: x[0])  # Ensure the tokens are in order of time
+    #     text = ""
+    #     for i, note in enumerate(notes):
+    #         text += "Pitch:" + str(note.pitch) + "\n"
+
+    #         if (self.addVelocity):
+    #             text += "Velocity:" + str(note.velocity) + "\n"
+
+    #         text += "Duration:" + str(note.end - note.start) + "\n"
+
+    #         if (i == 0):
+    #             text += "TimeShift:" + str(note.start) + "\n"
+    #         else:
+    #             text += "TimeShift:" + str(note.start - notes[i-1].start) + "\n"
+
+    #     return text
+    
+    def midiFileToTokens(self, midiFile):
+        notes = midiFile.instruments[0].notes
         notes.sort(key=lambda x: x.start)
 
         tokens = []
-        for note in notes:
-            # start, pitch, velocity, duration = note
-            # tokens.append(start)
-            # tokens.append(pitch - self.pitch_offset)
-            # tokens.append(velocity)
-            # tokens.append(duration)
+        for i, note in enumerate(notes):
+            tokens.append(self.pitchToken)
             tokens.append(note.pitch)
 
-        # mask = [1] * len(tokens)
+            tokens.append(self.durationToken)
+            tokens.append(note.duration)
 
-        return tokens #[tokens, mask]
+            tokens.append(self.timeShiftToken)
+            if (i == 0):
+                tokens.append(note.start)
+            else:
+                tokens.append(note.start - notes[i-1].start)
+
+        return tokens
+    
+    def fileToTokens(self, filename):
+        return self.midiFileToTokens(miditoolkit.MidiFile(filename))
+
+    def encode(self, midiFile):
+        return self.midiFileToTokens(midiFile)
 
     def decode(self, tokens):
         notes = []
-        for i in range(0, len(tokens), 4):
-            start = tokens[i]
-            pitch = tokens[i+1] + self.pitch_offset
-            velocity = tokens[i+2]
+
+        start = 0
+        for i in range(0, len(tokens), 6):
+            pitchToken = tokens[i]
+            pitch = tokens[i+1]
+
+            durationToken = tokens[i+2]
             duration = tokens[i+3]
-            notes.append((start, pitch, velocity, duration))
-        return notes
+
+            timeShiftToken = tokens[i+4]
+            timeShift = tokens[i+5]
+
+            # notes.append((start, pitch, velocity, duration))
+
+            if (pitchToken != self.pitchToken):
+                print("invalid pitchToken")
+
+            if (durationToken != self.durationToken):
+                print("invalid pitchToken")
+
+            if (timeShiftToken != self.timeShiftToken):
+                print("invalid pitchToken")
+
+            if (pitch > 127):
+                pitch = 0
+
+            velocity = 100
+            start += timeShift
+            end = start + duration
+            notes.append(miditoolkit.Note(velocity, pitch, start, end))
+
+
+        midiFile = miditoolkit.MidiFile()
+        # midiFile.ticks_per_beat = 16
+        midiFile.instruments.append(miditoolkit.Instrument(0, False, "Piano", notes))
+
+        return midiFile

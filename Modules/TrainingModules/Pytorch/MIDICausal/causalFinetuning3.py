@@ -18,7 +18,7 @@ from transformers import AutoModelForCausalLM, GPT2Config
 model = None
 
 if (loadFromDisk):
-    model = AutoModelForCausalLM.from_pretrained("MIDICausalFinetuning2/")
+    model = AutoModelForCausalLM.from_pretrained("MIDICausalFinetuning3/")
 else:
     # Define the distilgpt2 model configuration
     config = GPT2Config(
@@ -40,54 +40,24 @@ else:
 
 
 # Load Dataset
-
-from datasets import load_dataset
-
-eli5 = load_dataset("eli5_category", split="train[:5000]")
-eli5 = eli5.train_test_split(test_size=0.2)
-
-from transformers import AutoTokenizer
-# https://huggingface.co/docs/transformers/en/model_doc/gpt2
-tokenizer = AutoTokenizer.from_pretrained("distilbert/distilgpt2")
-
-def preprocess_function(examples):
-    return tokenizer([" ".join(x) for x in examples["answers"]])
-
-tokenized_eli5 = eli5.map(
-    preprocess_function,
-    batched=True,
-    num_proc=4,
-    remove_columns=eli5["train"].column_names,
-)
-
 from datasets import DatasetDict, Dataset
 
 midi_path = 'FurElise.mid'
 
-from midiTokenizer import MIDITokenizer
 from structuredTokenizer import MIDIStructuredTokenizer
 
-
-midiTokenizer = MIDITokenizer()
 structuredTokenizer = MIDIStructuredTokenizer()
 
 import miditoolkit
 midiFile = miditoolkit.MidiFile(midi_path)
-prev = midiFile.ticks_per_beat 
 midiFile.ticks_per_beat = 16 # updated automatically
-s = structuredTokenizer.encode(midiFile)
-print(s)
-midiFile = structuredTokenizer.decode(s)
+encodedMIDI = structuredTokenizer.encode(midiFile)
+print(encodedMIDI)
+midiFile = structuredTokenizer.decode(encodedMIDI)
 midiFile.dump("test.mid")
 
-
-# encodedMIDI = tokenizer.encode(midiTokenizer.encode(midi_path))
-encodedMIDI = tokenizer.encode(s)
-
-# train_dataset = Dataset.from_dict({"input_ids": [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0]], "attention_mask": [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0]]})
 train_dataset = Dataset.from_dict({"input_ids": [encodedMIDI], "attention_mask": [[1] * len(encodedMIDI)]})
 test_dataset = train_dataset
-
 
 datasetDict =  DatasetDict({'train': train_dataset, 'test': test_dataset})
 
@@ -120,7 +90,7 @@ from transformers import DataCollatorForLanguageModeling
 # Train
 
 training_args = TrainingArguments(
-    output_dir="MIDICausalFinetuning2",
+    output_dir="MIDICausalFinetuning3",
     eval_strategy="epoch",
     learning_rate=2e-5,
     weight_decay=0.01,
@@ -144,45 +114,6 @@ import math
 eval_results = trainer.evaluate()
 print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
 
-trainer.push_to_hub("MIDICausalFinetuning2")
-# tokenizer.push_to_hub("MIDICausalFinetuning2")
-
-
-
- 
-
-
-
-
-
-
-# # Inference
-
-# prompt = "Somatic hypermutation allows the immune system to"
-
-
-# from transformers import AutoTokenizer
-
-# tokenizer = AutoTokenizer.from_pretrained("progz/MIDICausalFinetuning2")
-# inputs = tokenizer(prompt, return_tensors="pt").input_ids
-
-
-# from transformers import pipeline
-
-# generator = pipeline("text-generation", model="progz/MIDICausalFinetuning2")
-# # generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
-# generator(prompt)
-
-
-
-
-
-
-# from transformers import AutoModelForCausalLM
-
-# model = AutoModelForCausalLM.from_pretrained("progz/MIDICausalFinetuning2")
-# outputs = model.generate(inputs, max_new_tokens=100, do_sample=True, top_k=50, top_p=0.95)
-
-# print(tokenizer.batch_decode(outputs, skip_special_tokens=True))
-
+trainer.push_to_hub("MIDICausalFinetuning3")
+# tokenizer.push_to_hub("MIDICausalFinetuning3")
 

@@ -73,18 +73,35 @@ Duration: 683"""
 #     eos_token="<|endoftext|>",
 # )
 
+event_tokens=[   
+    "\nTimeShift: ",
+    "\nPitch: ",
+    "\nDuration: ",
+    ]
 
-base_vocab=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", 
-       "\nTimeShift: ",
-       "\nPitch: ",
-       "\nDuration: ",
-]
+numbers_tokens=[]
+# for each midi note
+for i in range(0, 127): 
+    numbers_tokens.append(str(i))
 
-base_vocabDict={"0":0, "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, 
-       "\nTimeShift: ":10,
-       "\nPitch: ":11,
-       "\nDuration: ":12,
-}
+special_tokens = ["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]",]
+
+dict = {}
+
+def addListToDict(list):
+    for l in list:
+        dict[l] = len(dict)
+
+addListToDict(special_tokens)
+addListToDict(numbers_tokens)
+addListToDict(event_tokens)
+
+
+# base_vocabDict={"0":0, "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, 
+#        "\nTimeShift: ":10,
+#        "\nPitch: ":11,
+#        "\nDuration: ":12,
+# }
 
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
@@ -92,7 +109,7 @@ from tokenizers.trainers import WordPieceTrainer
 from tokenizers.pre_tokenizers import Whitespace
 
 # Initialize a tokenizer with the base vocabulary
-tokenizer = Tokenizer(WordPiece(unk_token="[UNK]", vocab=base_vocabDict))
+tokenizer = Tokenizer(WordPiece(unk_token="[UNK]", vocab=dict))
 # tokenizer = Tokenizer(models.BPE())
 
 def displayVocab(tok):
@@ -102,18 +119,13 @@ def displayVocab(tok):
 
 displayVocab(tokenizer)
 
-# Define pre-tokenizer
-# tokenizer.pre_tokenizer = Whitespace()
 
-# Set up trainer with the base vocabulary
-# trainer = WordPieceTrainer(special_tokens=base_vocab + ["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]",])
 # trainer = trainers.BpeTrainer(vocab_size=25000, special_tokens=base_vocab + ["<|endoftext|>"])
 
 # tokenizer.train_from_iterator([inputStr], trainer=trainer)
-
-# print("Pre tokenize:", tokenizer.pre_tokenizer.pre_tokenize_str(inputStr))
+# tokenizer.train_from_iterator([inputStr])
 
 encoding = tokenizer.encode(inputStr)
 print("Encode:", encoding.tokens)
 
-displayVocab(tokenizer)
+# displayVocab(tokenizer)
