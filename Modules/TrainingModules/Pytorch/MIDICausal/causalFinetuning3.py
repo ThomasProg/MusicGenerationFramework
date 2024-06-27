@@ -33,7 +33,7 @@ else:
     # )
 
     config = GPT2Config(
-        vocab_size=721+128+5000,#50257, # min : 721
+        vocab_size=1000,#721+128+5000,#50257, # min : 721
         n_positions=1024,
         n_ctx=1024,
         n_embd=400,
@@ -66,16 +66,16 @@ midiFile = miditoolkit.MidiFile(midi_path)
 timeSign = midiFile.time_signature_changes[0]
 newTicksPerBeat = timeSign.denominator * timeSign.numerator # 4*4=16
 for note in midiFile.instruments[0].notes:
-    note.start = note.start * newTicksPerBeat // midiFile.ticks_per_beat
-    note.end = note.end * newTicksPerBeat // midiFile.ticks_per_beat
+    note.start = round(note.start * newTicksPerBeat / midiFile.ticks_per_beat)
+    note.end = round(note.end * newTicksPerBeat / midiFile.ticks_per_beat)
+    # print("%d / %d" % (note.start, note.end))
+    print(note.pitch)
 assert(len(midiFile.time_signature_changes) == 1)
 midiFile.ticks_per_beat = newTicksPerBeat
-print(midiFile)
-print(midiFile.tempo_changes[0])
-print(midiFile.time_signature_changes[0])
+
 encodedMIDI = structuredTokenizer.encode(midiFile)
-print(encodedMIDI)
 midiFile = structuredTokenizer.decode(encodedMIDI)
+# encodedMIDI = []
 midiFile.ticks_per_beat = newTicksPerBeat
 midiFile.dump("test.mid")
 
@@ -118,7 +118,7 @@ training_args = TrainingArguments(
     learning_rate=2e-5,
     weight_decay=0.01,
     push_to_hub=True,
-    num_train_epochs = 500
+    num_train_epochs = 150
 )
 
 trainer = Trainer(
