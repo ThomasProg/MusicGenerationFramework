@@ -17,13 +17,13 @@ class MIDIStructuredTokenizer:
 
     def generateVocab(self):
         self.timeShiftToken = 0
-        self.vocab["TimeShift"] = self.timeShiftToken
+        # self.vocab["TimeShift"] = self.timeShiftToken
 
         self.pitchToken = 1
-        self.vocab["Pitch"] = self.pitchToken
+        # self.vocab["Pitch"] = self.pitchToken
 
         self.durationToken = 2
-        self.vocab["Duration"] = self.durationToken
+        # self.vocab["Duration"] = self.durationToken
 
         for i in range(0, 127): 
             self.vocab[str(i)] = i
@@ -56,17 +56,17 @@ class MIDIStructuredTokenizer:
 
         tokens = []
         for i, note in enumerate(notes):
-            tokens.append(self.pitchToken)
+            # tokens.append(self.pitchToken)
             tokens.append(note.pitch)
 
-            tokens.append(self.durationToken)
-            tokens.append(note.duration)
+            # tokens.append(self.durationToken)
+            tokens.append(note.duration+128)
 
-            tokens.append(self.timeShiftToken)
+            # tokens.append(self.timeShiftToken)
             if (i == 0):
-                tokens.append(note.start)
+                tokens.append(note.start+128)
             else:
-                tokens.append(note.start - notes[i-1].start)
+                tokens.append(note.start - notes[i-1].start + 128)
 
         return tokens
     
@@ -80,29 +80,32 @@ class MIDIStructuredTokenizer:
         notes = []
 
         start = 0
-        for i in range(0, len(tokens), 6):
-            pitchToken = tokens[i]
-            pitch = tokens[i+1]
+        for i in range(0, len(tokens)-2, 3):
+            # pitchToken = tokens[i]
+            pitch = tokens[i]
 
-            durationToken = tokens[i+2]
-            duration = tokens[i+3]
+            if (pitch > 127 or pitch <= 0):
+                i -= 2
+                print("Invalid pitch: %s ; skipping" % pitch)
+                continue
 
-            timeShiftToken = tokens[i+4]
-            timeShift = tokens[i+5]
+
+            # durationToken = tokens[i+2]
+            duration = tokens[i+1] - 128
+
+            # timeShiftToken = tokens[i+4]
+            timeShift = tokens[i+2] - 128
 
             # notes.append((start, pitch, velocity, duration))
 
-            if (pitchToken != self.pitchToken):
-                print("invalid pitchToken")
+            # if (pitchToken != self.pitchToken):
+            #     print("invalid pitchToken")
 
-            if (durationToken != self.durationToken):
-                print("invalid pitchToken")
+            # if (durationToken != self.durationToken):
+            #     print("invalid pitchToken")
 
-            if (timeShiftToken != self.timeShiftToken):
-                print("invalid pitchToken")
-
-            if (pitch > 127):
-                pitch = 0
+            # if (timeShiftToken != self.timeShiftToken):
+            #     print("invalid pitchToken")
 
             velocity = 100
             start += timeShift

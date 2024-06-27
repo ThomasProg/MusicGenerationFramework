@@ -2,7 +2,7 @@
 
 
 import os
-os.environ["HF_TOKEN"] = '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'
+os.environ["HF_TOKEN"] = ''
 
 loadFromDisk = False
 
@@ -18,18 +18,30 @@ from transformers import AutoModelForCausalLM, GPT2Config
 model = None
 
 if (loadFromDisk):
-    model = AutoModelForCausalLM.from_pretrained("MIDICausalFinetuning3/")
+    model = AutoModelForCausalLM.from_pretrained("MIDICausalFinetuning3_5thsymphony/")
 else:
     # Define the distilgpt2 model configuration
+    # config = GPT2Config(
+    #     vocab_size=50257,
+    #     n_positions=1024,
+    #     n_ctx=1024,
+    #     n_embd=400,
+    #     n_layer=6,  # distilgpt2 has fewer layers than GPT-2
+    #     n_head=10,
+    #     bos_token_id=50256,
+    #     eos_token_id=50256
+    # )
+
     config = GPT2Config(
-        vocab_size=50257,
+        vocab_size=721+128+5000,#50257, # min : 721
         n_positions=1024,
         n_ctx=1024,
         n_embd=400,
         n_layer=6,  # distilgpt2 has fewer layers than GPT-2
         n_head=10,
-        bos_token_id=50256,
-        eos_token_id=50256
+        n_inner=400*4,
+        bos_token_id=720,#50256,
+        eos_token_id=720#50256
     )
 
     # Instantiate the model from the configuration
@@ -42,7 +54,8 @@ else:
 # Load Dataset
 from datasets import DatasetDict, Dataset
 
-midi_path = 'FurElise.mid'
+# midi_path = 'FurElise.mid'
+midi_path = "Assets/Datasets/LakhMidiClean/Ludwig_van_Beethoven/5th_Symphony.mid"
 
 from structuredTokenizer import MIDIStructuredTokenizer
 
@@ -50,10 +63,20 @@ structuredTokenizer = MIDIStructuredTokenizer()
 
 import miditoolkit
 midiFile = miditoolkit.MidiFile(midi_path)
-midiFile.ticks_per_beat = 16 # updated automatically
+timeSign = midiFile.time_signature_changes[0]
+newTicksPerBeat = timeSign.denominator * timeSign.numerator # 4*4=16
+for note in midiFile.instruments[0].notes:
+    note.start = note.start * newTicksPerBeat // midiFile.ticks_per_beat
+    note.end = note.end * newTicksPerBeat // midiFile.ticks_per_beat
+assert(len(midiFile.time_signature_changes) == 1)
+midiFile.ticks_per_beat = newTicksPerBeat
+print(midiFile)
+print(midiFile.tempo_changes[0])
+print(midiFile.time_signature_changes[0])
 encodedMIDI = structuredTokenizer.encode(midiFile)
 print(encodedMIDI)
 midiFile = structuredTokenizer.decode(encodedMIDI)
+midiFile.ticks_per_beat = newTicksPerBeat
 midiFile.dump("test.mid")
 
 train_dataset = Dataset.from_dict({"input_ids": [encodedMIDI], "attention_mask": [[1] * len(encodedMIDI)]})
@@ -90,12 +113,12 @@ from transformers import DataCollatorForLanguageModeling
 # Train
 
 training_args = TrainingArguments(
-    output_dir="MIDICausalFinetuning3",
+    output_dir="MIDICausalFinetuning3_5thsymphony",
     eval_strategy="epoch",
     learning_rate=2e-5,
     weight_decay=0.01,
     push_to_hub=True,
-    num_train_epochs = 100
+    num_train_epochs = 500
 )
 
 trainer = Trainer(
@@ -114,6 +137,6 @@ import math
 eval_results = trainer.evaluate()
 print(f"Perplexity: {math.exp(eval_results['eval_loss']):.2f}")
 
-trainer.push_to_hub("MIDICausalFinetuning3")
-# tokenizer.push_to_hub("MIDICausalFinetuning3")
+trainer.push_to_hub("MIDICausalFinetuning3_5thsymphony")
+# tokenizer.push_to_hub("MIDICausalFinetuning3_5thsymphony")
 
