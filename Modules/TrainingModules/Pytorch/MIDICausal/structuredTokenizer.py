@@ -6,27 +6,46 @@ class MIDIStructuredTokenizer:
     minPitch = 0
     maxPitch = 127
 
+    nbPitchDeltaTokens = 39 # should be impair to be symmetric
     nbDurationTokens = 200
     nbTimeShiftTokens = 100
 
-    addPitchTokens = True
+    addPitchTokens = False
+    addPitchDeltaTokens = True
     addDurationTokens = True
     addTimeShiftTokens = True
 
+    pitchDeltaStartPitch = 60
+
     def __init__(self):
-        self.nbTokens = 0
+        self._nbTokens = 0
 
         if (self.addPitchTokens):
-            self._firstPitchToken = self.nbTokens
-            self.nbTokens += self.maxPitch - self.minPitch
+            self._firstPitchToken = self._nbTokens
+            self._nbTokens += self.maxPitch - self.minPitch
+
+        if (self.addPitchDeltaTokens):
+            assert(self.nbPitchDeltaTokens % 2 == 1)
+            self._firstPitchDeltaToken = self._nbTokens
+            self._nbTokens += self.nbPitchDeltaTokens
 
         if (self.addDurationTokens):
-            self._firstDurationToken = self.nbTokens
-            self.nbTokens += self.nbDurationTokens
+            self._firstDurationToken = self._nbTokens
+            self._nbTokens += self.nbDurationTokens
 
         if (self.addTimeShiftTokens):
-            self._firstTimeShiftToken = self.nbTokens
-            self.nbTokens += self.nbTimeShiftTokens
+            self._firstTimeShiftToken = self._nbTokens
+            self._nbTokens += self.nbTimeShiftTokens
+
+        self.bos_token_id = self._nbTokens
+        self.eos_token_id = self._nbTokens
+        self._nbTokens += 1
+
+        assert(self.addPitchTokens ^ self.addPitchDeltaTokens)
+
+    @property
+    def nbTokens(self):
+        return self._nbTokens
 
     ## ========= PITCH ========= ## 
 
@@ -34,7 +53,7 @@ class MIDIStructuredTokenizer:
         return self._firstPitchToken
 
     def lastPitchToken(self):
-        return self.maxPitch - self.minPitch
+        return self.firstPitchToken() + self.maxPitch - self.minPitch
 
     def pitchToToken(self, pitch):
         assert(pitch >= self.minPitch and pitch <= self.maxPitch)
@@ -46,6 +65,25 @@ class MIDIStructuredTokenizer:
     
     def isPitchToken(self, token):
         return token >= self.firstPitchToken() and token <= self.lastPitchToken()
+    
+    ## ========= PITCH DELTA ========= ## 
+
+    def firstPitchDeltaToken(self):
+        return self._firstPitchDeltaToken
+
+    def lastPitchDeltaToken(self):
+        return self.firstPitchDeltaToken() + self.nbPitchDeltaTokens - 1
+
+    def pitchDeltaToToken(self, pitchDelta):
+        assert(pitchDelta >= - self.nbPitchDeltaTokens//2 and pitchDelta < self.nbPitchDeltaTokens//2)
+        return round(np.interp(pitchDelta, [- self.nbPitchDeltaTokens // 2, self.nbPitchDeltaTokens // 2], [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()]))
+    
+    def tokenToPitchDelta(self, token):
+        assert(self.isPitchDeltaToken(token))
+        return round(np.interp(token, [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()], [- self.nbPitchDeltaTokens // 2, self.nbPitchDeltaTokens // 2]))
+    
+    def isPitchDeltaToken(self, token):
+        return token >= self.firstPitchDeltaToken() and token <= self.lastPitchDeltaToken()
 
     ## ========= DURATION ========= ## 
 
@@ -93,18 +131,27 @@ class MIDIStructuredTokenizer:
         notes.sort(key=lambda x: x.start)
 
         tokens = []
-        lastNoteStart = 0
-        for i, note in enumerate(notes):
+        lastNote = None
+        for note in notes:
             if (self.addPitchTokens):
                 tokens.append(self.pitchToToken(note.pitch))
+
+            if (self.addPitchDeltaTokens):
+                if (lastNote != None):
+                    tokens.append(self.pitchDeltaToToken(note.pitch - lastNote.pitch))
+                else:
+                    tokens.append(self.pitchDeltaToToken(0))
 
             if (self.addDurationTokens):
                 tokens.append(self.durationToToken(note.duration))
 
             if (self.addTimeShiftTokens):
-                delta = note.start - lastNoteStart
-                tokens.append(self.timeShiftToToken(delta))
-                lastNoteStart = note.start
+                if (lastNote != None):
+                    tokens.append(self.timeShiftToToken(note.start - lastNote.start))
+                else:
+                    tokens.append(self.timeShiftToToken(0))
+
+            lastNote = note
 
         return tokens
     
@@ -121,16 +168,22 @@ class MIDIStructuredTokenizer:
         start = 0
         
         pitch = None
+        pitchDelta = None
         duration = None
         timeShift = None
 
         def reset(self):
-            nonlocal pitch, duration, timeShift
+            nonlocal pitch, pitchDelta, duration, timeShift
 
             if self.addPitchTokens:
                 pitch = None
             else:
                 pitch = 60
+
+            if self.addPitchDeltaTokens:
+                pitchDelta = None
+            else:
+                pitchDelta = 0
 
             if self.addDurationTokens:
                 duration = None
@@ -143,19 +196,27 @@ class MIDIStructuredTokenizer:
                 timeShift = 1
 
         reset(self)
+        if (self.addPitchDeltaTokens):
+            pitch = self.pitchDeltaStartPitch
 
         for token in tokens:
             if (self.addPitchTokens and self.isPitchToken(token)):
                 pitch = self.tokenToPitch(token)
+            elif (self.addPitchDeltaTokens and self.isPitchDeltaToken(token)):
+                pitchDelta = self.tokenToPitchDelta(token)
             elif (self.addDurationTokens and self.isDurationToken(token)):
                 duration = self.tokenToDuration(token)
             elif (self.addTimeShiftTokens and self.isTimeShiftToken(token)):
                 timeShift = self.tokenToTimeShift(token)
 
-            if (pitch != None and duration != None and timeShift != None):
+            if (((self.addPitchTokens and pitch != None) or (self.addPitchDeltaTokens and pitchDelta != None)) and duration != None and timeShift != None):
                 velocity = 100
                 start += timeShift
                 end = start + duration
+
+                if (self.addPitchDeltaTokens):
+                    pitch += pitchDelta
+
                 notes.append(miditoolkit.Note(velocity, pitch, start, end))
 
                 reset(self)
