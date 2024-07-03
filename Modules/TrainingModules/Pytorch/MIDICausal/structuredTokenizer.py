@@ -1,9 +1,92 @@
 
 import miditoolkit
+import numpy as np
+
 class MIDIStructuredTokenizer:
-    addVelocity = False
+    minPitch = 0
+    maxPitch = 127
+
+    nbDurationTokens = 200
+    nbTimeShiftTokens = 100
+
+    addPitchTokens = True
+    addDurationTokens = True
+    addTimeShiftTokens = True
+
     def __init__(self):
-        pass
+        self.nbTokens = 0
+
+        if (self.addPitchTokens):
+            self._firstPitchToken = self.nbTokens
+            self.nbTokens += self.maxPitch - self.minPitch
+
+        if (self.addDurationTokens):
+            self._firstDurationToken = self.nbTokens
+            self.nbTokens += self.nbDurationTokens
+
+        if (self.addTimeShiftTokens):
+            self._firstTimeShiftToken = self.nbTokens
+            self.nbTokens += self.nbTimeShiftTokens
+
+    ## ========= PITCH ========= ## 
+
+    def firstPitchToken(self):
+        return self._firstPitchToken
+
+    def lastPitchToken(self):
+        return self.maxPitch - self.minPitch
+
+    def pitchToToken(self, pitch):
+        assert(pitch >= self.minPitch and pitch <= self.maxPitch)
+        return round(np.interp(pitch, [self.minPitch, self.maxPitch], [self.firstPitchToken(), self.lastPitchToken()]))
+    
+    def tokenToPitch(self, token):
+        assert(self.isPitchToken(token))
+        return round(np.interp(token, [self.firstPitchToken(), self.lastPitchToken()], [self.minPitch, self.maxPitch]))
+    
+    def isPitchToken(self, token):
+        return token >= self.firstPitchToken() and token <= self.lastPitchToken()
+
+    ## ========= DURATION ========= ## 
+
+    def firstDurationToken(self):
+        return self._firstDurationToken
+
+    def lastDurationToken(self):
+        return self.firstDurationToken() + self.nbDurationTokens - 1
+
+    def durationToToken(self, duration):
+        assert(duration >= 0 and duration < self.nbDurationTokens)
+        return round(np.interp(duration, [0, self.nbDurationTokens-1], [self.firstDurationToken(), self.lastDurationToken()]))
+    
+    def tokenToDuration(self, token):
+        assert(self.isDurationToken(token))
+        return round(np.interp(token, [self.firstDurationToken(), self.lastDurationToken()], [0, self.nbDurationTokens-1]))
+    
+    def isDurationToken(self, token):
+        return token >= self.firstDurationToken() and token <= self.lastDurationToken()
+    
+    ## ========= TIME SHIFT ========= ## 
+
+    def firstTimeShiftToken(self):
+        return self._firstTimeShiftToken
+
+    def lastTimeShiftToken(self):
+        return self.firstTimeShiftToken() + self.nbTimeShiftTokens - 1
+    
+    def timeShiftToToken(self, timeShift):
+        assert(timeShift >= 0)
+        timeShift = min(timeShift, self.nbTimeShiftTokens-1)
+        return round(np.interp(timeShift, [0, self.nbTimeShiftTokens-1], [self.firstTimeShiftToken(), self.lastTimeShiftToken()]))
+    
+    def tokenToTimeShift(self, token):
+        assert(self.isTimeShiftToken(token))
+        return round(np.interp(token, [self.firstTimeShiftToken(), self.lastTimeShiftToken()], [0, self.nbTimeShiftTokens-1]))
+    
+    def isTimeShiftToken(self, token):
+        return token >= self.firstTimeShiftToken() and token <= self.lastTimeShiftToken()
+
+    ## ========= ENCODE / DECODE ========= ## 
 
     def midiFileToTokens(self, midiFile):
         notes = midiFile.instruments[0].notes
@@ -12,20 +95,15 @@ class MIDIStructuredTokenizer:
         tokens = []
         lastNoteStart = 0
         for i, note in enumerate(notes):
-            assert(note.pitch >= 0 and note.pitch <= 127)
-            tokens.append(note.pitch) # 0 - 127
+            if (self.addPitchTokens):
+                tokens.append(self.pitchToToken(note.pitch))
 
-            assert(note.duration >= 0 and note.duration <= 299 - 128)
-            tokens.append(note.duration+128) # 128 - 299
+            if (self.addDurationTokens):
+                tokens.append(self.durationToToken(note.duration))
 
-            delta = note.start - lastNoteStart
-            delta = min(delta, 999 - 300)
-            assert(delta >= 0 and delta <= 999 - 300)
-            if (i == 0):
-                tokens.append(300) # remove delay at start
-                # tokens.append(delta+300) # 300 - 999
-            else:
-                tokens.append(delta + 300) # 300 - 999
+            if (self.addTimeShiftTokens):
+                delta = note.start - lastNoteStart
+                tokens.append(self.timeShiftToToken(delta))
                 lastNoteStart = note.start
 
         return tokens
@@ -36,6 +114,7 @@ class MIDIStructuredTokenizer:
     def encode(self, midiFile):
         return self.midiFileToTokens(midiFile)
     
+    # Make sure notes are valid
     def decode(self, tokens):
         notes = []
 
@@ -44,60 +123,45 @@ class MIDIStructuredTokenizer:
         pitch = None
         duration = None
         timeShift = None
+
+        def reset(self):
+            nonlocal pitch, duration, timeShift
+
+            if self.addPitchTokens:
+                pitch = None
+            else:
+                pitch = 60
+
+            if self.addDurationTokens:
+                duration = None
+            else:
+                duration = 1
+
+            if self.addTimeShiftTokens:
+                timeShift = None
+            else:
+                timeShift = 1
+
+        reset(self)
+
         for token in tokens:
-            if (token >= 0 and token <= 127):
-                pitch = token
-            elif (token >= 128 and token <= 299):
-                duration = token - 128
-            elif (token >= 300 and token <= 999):
-                timeShift = token - 300
+            if (self.addPitchTokens and self.isPitchToken(token)):
+                pitch = self.tokenToPitch(token)
+            elif (self.addDurationTokens and self.isDurationToken(token)):
+                duration = self.tokenToDuration(token)
+            elif (self.addTimeShiftTokens and self.isTimeShiftToken(token)):
+                timeShift = self.tokenToTimeShift(token)
 
             if (pitch != None and duration != None and timeShift != None):
                 velocity = 100
                 start += timeShift
-                # print(timeShift)
                 end = start + duration
                 notes.append(miditoolkit.Note(velocity, pitch, start, end))
 
-                pitch = None
-                duration = None
-                timeShift = None
+                reset(self)
 
         midiFile = miditoolkit.MidiFile()
         midiFile.instruments.append(miditoolkit.Instrument(0, False, "Piano", notes))
 
         return midiFile
 
-    # Make sure notes are valid
-    def decode2(self, tokens):
-        notes = []
-
-        start = 0
-        for i in range(0, len(tokens)-2, 3):
-            pitch = tokens[i]
-
-            if (pitch > 127 or pitch <= 0):
-                i -= 2
-                print("Invalid pitch: %s ; skipping" % pitch)
-                continue
-
-            duration = tokens[i+1] - 128
-            if (duration < 0):
-                print("duration : ", duration)
-                continue
-
-            timeShift = tokens[i+2] - 300
-            if (timeShift < 0):
-                print("timeShift : ", timeShift)
-                continue
-
-            velocity = 100
-            start += timeShift
-            end = start + duration
-            notes.append(miditoolkit.Note(velocity, pitch, start, end))
-
-
-        midiFile = miditoolkit.MidiFile()
-        midiFile.instruments.append(miditoolkit.Instrument(0, False, "Piano", notes))
-
-        return midiFile
