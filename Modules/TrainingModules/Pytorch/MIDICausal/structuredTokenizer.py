@@ -6,7 +6,7 @@ class MIDIStructuredTokenizer:
     minPitch = 0
     maxPitch = 127
 
-    nbPitchDeltaTokens = 39 # should be impair to be symmetric
+    nbPitchDeltaTokens = 41 # should be impair to be symmetric
     nbDurationTokens = 200
     nbTimeShiftTokens = 100
 
@@ -15,7 +15,7 @@ class MIDIStructuredTokenizer:
     addDurationTokens = True
     addTimeShiftTokens = True
 
-    pitchDeltaStartPitch = 60
+    pitchDeltaStartPitch = 76
 
     def __init__(self):
         self._nbTokens = 0
@@ -75,12 +75,12 @@ class MIDIStructuredTokenizer:
         return self.firstPitchDeltaToken() + self.nbPitchDeltaTokens - 1
 
     def pitchDeltaToToken(self, pitchDelta):
-        assert(pitchDelta >= - self.nbPitchDeltaTokens//2 and pitchDelta < self.nbPitchDeltaTokens//2)
-        return round(np.interp(pitchDelta, [- self.nbPitchDeltaTokens // 2, self.nbPitchDeltaTokens // 2], [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()]))
+        assert(pitchDelta >= - (self.nbPitchDeltaTokens//2) and pitchDelta < self.nbPitchDeltaTokens//2)
+        return round(np.interp(pitchDelta, [- (self.nbPitchDeltaTokens // 2), self.nbPitchDeltaTokens // 2], [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()]))
     
     def tokenToPitchDelta(self, token):
         assert(self.isPitchDeltaToken(token))
-        return round(np.interp(token, [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()], [- self.nbPitchDeltaTokens // 2, self.nbPitchDeltaTokens // 2]))
+        return round(np.interp(token, [self.firstPitchDeltaToken(), self.lastPitchDeltaToken()], [- (self.nbPitchDeltaTokens // 2), self.nbPitchDeltaTokens // 2]))
     
     def isPitchDeltaToken(self, token):
         return token >= self.firstPitchDeltaToken() and token <= self.lastPitchDeltaToken()
@@ -177,12 +177,10 @@ class MIDIStructuredTokenizer:
 
             if self.addPitchTokens:
                 pitch = None
-            else:
-                pitch = 60
-
-            if self.addPitchDeltaTokens:
+            elif self.addPitchDeltaTokens:
                 pitchDelta = None
             else:
+                pitch = 60
                 pitchDelta = 0
 
             if self.addDurationTokens:
@@ -216,6 +214,7 @@ class MIDIStructuredTokenizer:
 
                 if (self.addPitchDeltaTokens):
                     pitch += pitchDelta
+                    assert(pitch >= 0 and pitch <= 127)
 
                 notes.append(miditoolkit.Note(velocity, pitch, start, end))
 
