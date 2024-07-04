@@ -214,7 +214,8 @@ class MIDIStructuredTokenizer:
 
                 if (self.addPitchDeltaTokens):
                     pitch += pitchDelta
-                    assert(pitch >= 0 and pitch <= 127)
+                    pitch = max(min(127, pitch), 0)
+                    # assert(pitch >= 0 and pitch <= 127)
 
                 notes.append(miditoolkit.Note(velocity, pitch, start, end))
 
