@@ -10,8 +10,13 @@ class MIDIStructuredTokenizer:
     nbDurationTokens = 200
     nbTimeShiftTokens = 100
 
+    nbPitchChromaTokens = 12 # Constant for chroma
+    nbPitchOctaveTokens = 11 # Constant for chroma
+
     addPitchTokens = False
-    addPitchDeltaTokens = True
+    addPitchDeltaTokens = False
+    addPitchAsChromaticScale = True
+    addPitchOctave = True
     addDurationTokens = True
     addTimeShiftTokens = True
 
@@ -21,13 +26,29 @@ class MIDIStructuredTokenizer:
         self._nbTokens = 0
 
         if (self.addPitchTokens):
+            assert(not(self.addPitchDeltaTokens))
+            assert(not(self.addPitchAsChromaticScale))
             self._firstPitchToken = self._nbTokens
             self._nbTokens += self.maxPitch - self.minPitch
 
         if (self.addPitchDeltaTokens):
+            assert(not(self.addPitchTokens))
+            assert(not(self.addPitchAsChromaticScale))
             assert(self.nbPitchDeltaTokens % 2 == 1)
             self._firstPitchDeltaToken = self._nbTokens
             self._nbTokens += self.nbPitchDeltaTokens
+
+        if (self.addPitchAsChromaticScale):
+            assert(not(self.addPitchTokens))
+            assert(not(self.addPitchDeltaTokens))
+            self._firstPitchChromaToken = self._nbTokens
+            self._nbTokens += self.nbPitchChromaTokens
+
+        if (self.addPitchOctave):
+            assert(not(self.addPitchTokens))
+            assert(not(self.addPitchDeltaTokens))
+            self._firstPitchOctaveToken = self._nbTokens
+            self._nbTokens += self.nbPitchOctaveTokens
 
         if (self.addDurationTokens):
             self._firstDurationToken = self._nbTokens
@@ -40,8 +61,6 @@ class MIDIStructuredTokenizer:
         self.bos_token_id = self._nbTokens
         self.eos_token_id = self._nbTokens
         self._nbTokens += 1
-
-        assert(self.addPitchTokens ^ self.addPitchDeltaTokens)
 
     @property
     def nbTokens(self):
@@ -84,6 +103,47 @@ class MIDIStructuredTokenizer:
     
     def isPitchDeltaToken(self, token):
         return token >= self.firstPitchDeltaToken() and token <= self.lastPitchDeltaToken()
+    
+    ## ========= PITCH AS CHROMATIC SCALE ========= ## 
+
+    def firstPitchChromaToken(self):
+        return self._firstPitchChromaToken
+
+    def lastPitchChromaToken(self):
+        return self.firstPitchChromaToken() + self.nbPitchChromaTokens - 1
+
+    def pitchChromaToToken(self, pitchChroma):
+        pitchChroma = pitchChroma % self.nbPitchChromaTokens
+        return round(np.interp(pitchChroma, [0, self.nbPitchChromaTokens - 1], [self.firstPitchChromaToken(), self.lastPitchChromaToken()]))
+    
+    def tokenToPitchChroma(self, token):
+        assert(self.isPitchChromaToken(token))
+        return round(np.interp(token, [self.firstPitchChromaToken(), self.lastPitchChromaToken()], [0, self.nbPitchChromaTokens - 1]))
+    
+    def isPitchChromaToken(self, token):
+        return token >= self.firstPitchChromaToken() and token <= self.lastPitchChromaToken()
+    
+    ## ========= PITCH OCTAVE ========= ## 
+
+    def firstPitchOctaveToken(self):
+        return self._firstPitchOctaveToken
+
+    def lastPitchOctaveToken(self):
+        return self.firstPitchOctaveToken() + self.nbPitchOctaveTokens - 1
+
+    def pitchOctaveToToken(self, pitchOctave):
+        pitchOctave = pitchOctave // self.nbPitchChromaTokens
+        return round(np.interp(pitchOctave, [0, self.nbPitchOctaveTokens - 1], [self.firstPitchOctaveToken(), self.lastPitchOctaveToken()]))
+    
+    def tokenToPitchOctave(self, token):
+        assert(self.isPitchOctaveToken(token))
+        return round(np.interp(token, [self.firstPitchOctaveToken(), self.lastPitchOctaveToken()], [0, self.nbPitchOctaveTokens - 1]))
+    
+    def isPitchOctaveToken(self, token):
+        return token >= self.firstPitchOctaveToken() and token <= self.lastPitchOctaveToken()
+    
+    def getPitchFromChromaAndOctave(self, chroma, octave):
+        return octave * 12 + chroma
 
     ## ========= DURATION ========= ## 
 
@@ -130,11 +190,16 @@ class MIDIStructuredTokenizer:
         notes = midiFile.instruments[0].notes
         notes.sort(key=lambda x: x.start)
 
-        tokens = []
+        tokens = [self.bos_token_id] # begin token
         lastNote = None
         for note in notes:
             if (self.addPitchTokens):
                 tokens.append(self.pitchToToken(note.pitch))
+
+            if (self.addPitchAsChromaticScale):
+                tokens.append(self.pitchChromaToToken(note.pitch))
+            if (self.addPitchOctave):
+                tokens.append(self.pitchOctaveToToken(note.pitch))
 
             if (self.addPitchDeltaTokens):
                 if (lastNote != None):
@@ -153,6 +218,7 @@ class MIDIStructuredTokenizer:
 
             lastNote = note
 
+        tokens.append(self.eos_token_id) # end token
         return tokens
     
     def fileToTokens(self, filename):
@@ -162,6 +228,7 @@ class MIDIStructuredTokenizer:
         return self.midiFileToTokens(midiFile)
     
     # Make sure notes are valid
+    # Events must be in chunks
     def decode(self, tokens):
         notes = []
 
@@ -171,9 +238,11 @@ class MIDIStructuredTokenizer:
         pitchDelta = None
         duration = None
         timeShift = None
+        pitchChroma = None
+        pitchOctave = None
 
         def reset(self):
-            nonlocal pitch, pitchDelta, duration, timeShift
+            nonlocal pitch, pitchDelta, duration, timeShift, pitchChroma, pitchOctave
 
             if self.addPitchTokens:
                 pitch = None
@@ -193,6 +262,9 @@ class MIDIStructuredTokenizer:
             else:
                 timeShift = 1
 
+            pitchChroma = None
+            pitchOctave = None
+
         reset(self)
         if (self.addPitchDeltaTokens):
             pitch = self.pitchDeltaStartPitch
@@ -202,12 +274,21 @@ class MIDIStructuredTokenizer:
                 pitch = self.tokenToPitch(token)
             elif (self.addPitchDeltaTokens and self.isPitchDeltaToken(token)):
                 pitchDelta = self.tokenToPitchDelta(token)
+            elif (self.addPitchAsChromaticScale and self.isPitchChromaToken(token)):
+                pitchChroma = self.tokenToPitchChroma(token)
+            elif (self.addPitchOctave and self.isPitchOctaveToken(token)):
+                pitchOctave = self.tokenToPitchOctave(token)
             elif (self.addDurationTokens and self.isDurationToken(token)):
                 duration = self.tokenToDuration(token)
             elif (self.addTimeShiftTokens and self.isTimeShiftToken(token)):
                 timeShift = self.tokenToTimeShift(token)
 
-            if (((self.addPitchTokens and pitch != None) or (self.addPitchDeltaTokens and pitchDelta != None)) and duration != None and timeShift != None):
+            pitchReady = self.addPitchTokens and pitch != None
+            pitchDeltaReady = self.addPitchDeltaTokens and pitchDelta != None
+            pitchChromaReady = self.addPitchAsChromaticScale and pitchChroma != None
+            pitchOctaveReady = not(self.addPitchAsChromaticScale) or pitchOctave != None
+
+            if ((pitchReady or pitchDeltaReady or (pitchChromaReady and pitchOctaveReady)) and duration != None and timeShift != None):
                 velocity = 100
                 start += timeShift
                 end = start + duration
@@ -216,6 +297,11 @@ class MIDIStructuredTokenizer:
                     pitch += pitchDelta
                     pitch = max(min(127, pitch), 0)
                     # assert(pitch >= 0 and pitch <= 127)
+
+                if (self.addPitchAsChromaticScale):
+                    if not(self.addPitchAsChromaticScale):
+                        pitchOctave = 5
+                    pitch = pitchChroma + pitchOctave * self.nbPitchChromaTokens
 
                 notes.append(miditoolkit.Note(velocity, pitch, start, end))
 
