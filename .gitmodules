@@ -19,3 +19,6 @@
 [submodule "Modules/TrainingModules/Pytorch/MIDITransformerDiffusion"]
 	path = Modules/TrainingModules/Pytorch/MIDITransformerDiffusion
 	url = https://github.com/ThomasProg/MIDITransformerDiffusion
+[submodule "Modules/ScoreScrapper"]
+	path = Modules/ScoreScrapper
+	url = git@github.com:ThomasProg/ScoreScrapper.git
