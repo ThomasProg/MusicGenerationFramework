@@ -22,3 +22,6 @@
 [submodule "Modules/ScoreScrapper"]
 	path = Modules/ScoreScrapper
 	url = git@github.com:ThomasProg/ScoreScrapper.git
+[submodule "Modules/Tools/ScoreScrapper"]
+	path = Modules/Tools/ScoreScrapper
+	url = git@github.com:ThomasProg/ScoreScrapper.git
