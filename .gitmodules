@@ -25,3 +25,6 @@
 [submodule "Modules/Tools/ScoreScrapper"]
 	path = Modules/Tools/ScoreScrapper
 	url = git@github.com:ThomasProg/ScoreScrapper.git
+[submodule "Assets/Datasets/MutopiaProject"]
+	path = Assets/Datasets/MutopiaProject
+	url = git@github.com:MutopiaProject/MutopiaProject.git

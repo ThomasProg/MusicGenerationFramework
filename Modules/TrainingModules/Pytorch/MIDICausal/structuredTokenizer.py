@@ -6,18 +6,18 @@ class MIDIStructuredTokenizer:
     minPitch = 0
     maxPitch = 127
 
-    nbPitchDeltaTokens = 41 # should be impair to be symmetric
+    nbPitchDeltaTokens = 257 # should be impair to be symmetric
     nbDurationTokens = 200
     nbTimeShiftTokens = 100
 
     nbPitchChromaTokens = 12 # Constant for chroma
     nbPitchOctaveTokens = 11 # Constant for chroma
 
-    addPitchTokens = False
+    addPitchTokens = True
     addPitchDeltaTokens = False
-    addPitchAsChromaticScale = True
-    addPitchOctave = True
-    addDurationTokens = True
+    addPitchAsChromaticScale = False
+    addPitchOctave = False
+    addDurationTokens = False
     addTimeShiftTokens = True
 
     pitchDeltaStartPitch = 76
@@ -154,7 +154,9 @@ class MIDIStructuredTokenizer:
         return self.firstDurationToken() + self.nbDurationTokens - 1
 
     def durationToToken(self, duration):
-        assert(duration >= 0 and duration < self.nbDurationTokens)
+        # assert(duration >= 0 and duration < self.nbDurationTokens)
+        assert(duration >= 0)
+        duration = min(duration, self.nbDurationTokens - 1)
         return round(np.interp(duration, [0, self.nbDurationTokens-1], [self.firstDurationToken(), self.lastDurationToken()]))
     
     def tokenToDuration(self, token):
@@ -225,6 +227,9 @@ class MIDIStructuredTokenizer:
         return self.midiFileToTokens(miditoolkit.MidiFile(filename))
 
     def encode(self, midiFile):
+        return self.midiFileToTokens(midiFile)
+    
+    def __call__(self, midiFile):
         return self.midiFileToTokens(midiFile)
     
     # Make sure notes are valid
