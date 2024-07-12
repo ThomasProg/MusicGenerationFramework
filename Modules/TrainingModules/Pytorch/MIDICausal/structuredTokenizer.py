@@ -8,7 +8,7 @@ class MIDIStructuredTokenizer:
 
     nbPitchDeltaTokens = 257 # should be impair to be symmetric
     nbDurationTokens = 200
-    nbTimeShiftTokens = 100
+    nbTimeShiftTokens = 5000
 
     nbPitchChromaTokens = 12 # Constant for chroma
     nbPitchOctaveTokens = 11 # Constant for chroma
@@ -29,7 +29,7 @@ class MIDIStructuredTokenizer:
             assert(not(self.addPitchDeltaTokens))
             assert(not(self.addPitchAsChromaticScale))
             self._firstPitchToken = self._nbTokens
-            self._nbTokens += self.maxPitch - self.minPitch
+            self._nbTokens += self.maxPitch - self.minPitch + 1
 
         if (self.addPitchDeltaTokens):
             assert(not(self.addPitchTokens))
