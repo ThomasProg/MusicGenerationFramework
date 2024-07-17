@@ -1,51 +1,42 @@
-from miditok import REMI, TokenizerConfig  # here we choose to use REMI
+# https://github.com/Natooz/MidiTok
+
+from miditok import REMI, TokenizerConfig
+from miditok.pytorch_data import DatasetMIDI, DataCollator
+from miditok.utils import split_files_for_training
+from torch.utils.data import DataLoader
 from pathlib import Path
 
-# Our parameters
-TOKENIZER_PARAMS = {
-    "pitch_range": (21, 109),
-    "beat_res": {(0, 4): 8, (4, 12): 4},
-    "num_velocities": 32,
-    "special_tokens": ["PAD", "BOS", "EOS", "MASK"],
-    "use_chords": True,
-    "use_rests": False,
-    "use_tempos": True,
-    "use_time_signatures": False,
-    "use_programs": False,
-    "num_tempos": 32,  # number of tempo bins
-    "tempo_range": (40, 250),  # (min, max)
-    # "save_to_json": "tokenizer.json"
-}
-config = TokenizerConfig(**TOKENIZER_PARAMS)
-
-# Creates the tokenizer
+# Creating a multitrack tokenizer, read the doc to explore all the parameters
+config = TokenizerConfig(num_velocities=16, use_chords=True, use_programs=True)
 tokenizer = REMI(config)
 
+# Train the tokenizer with Byte Pair Encoding (BPE)
+files_paths = list(Path("C:/Users/Utilisateur/Desktop/Research/MusicGenerationFramework/Assets/Datasets/Maestro").glob("**/*.midi"))
+tokenizer.train(vocab_size=30000, files_paths=files_paths)
+tokenizer.save(Path("MIDITok", "tokenizer.json"))
+# And pushing it to the Hugging Face hub (you can download it back with .from_pretrained)
+tokenizer.push_to_hub("Progz/MidiTokTokenizer", private=True, token="")
 
+# Split MIDIs into smaller chunks for training
+dataset_chunks_dir = Path("MIDITOK", "midi_chunks")
+split_files_for_training(
+    files_paths=files_paths,
+    tokenizer=tokenizer,
+    save_dir=dataset_chunks_dir,
+    max_seq_len=1024,
+)
 
-# Tokenize a MIDI file
-tokens = tokenizer(Path('FurElise.mid'))  # automatically detects Score objects, paths, tokens
+# Create a Dataset, a DataLoader and a collator to train a model
+dataset = DatasetMIDI(
+    files_paths=list(dataset_chunks_dir.glob("**/*.mid")),
+    tokenizer=tokenizer,
+    max_seq_len=1024,
+    bos_token_id=tokenizer["BOS_None"],
+    eos_token_id=tokenizer["EOS_None"],
+)
+collator = DataCollator(tokenizer.pad_token_id, copy_inputs_as_labels=True)
+dataloader = DataLoader(dataset, batch_size=64, collate_fn=collator)
 
-# print(tokens) 
-
-# Convert to MIDI and save it
-generated_midi = tokenizer(tokens)  # MidiTok can handle PyTorch/Numpy/Tensorflow tensors
-generated_midi.dump_midi(Path("decoded_midi.mid"))
-
-from miditok import REMI
-from pathlib import Path
-
-# Creates the tokenizer and list the file paths
-tokenizer = REMI()  # using defaults parameters (constants.py)
-# midi_paths = list(Path("Assets/Datasets/LakhMidiClean/").glob("**/*.mid"))
-midi_paths = list(Path("Assets/Datasets/LakhMidiClean/3T/").glob("**/*.mid"))
-
-# Builds the vocabulary with BPE
-tokenizer.train(vocab_size=283, files_paths=midi_paths)
-
-tokenizer.save("tokenizer.json")
-
-
-
-
-
+# Iterate over the dataloader to train a model
+for batch in dataloader:
+    print("Train your model on this batch...")
