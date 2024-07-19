@@ -39,14 +39,14 @@ class BPE:
     def vocab_size(self):
         return len(self.compressVocab)
 
-    def add_token(self, newToken):
-        if not(newToken in self.compressVocab):
-            self.compressVocab[newToken] = self.vocab_size()
+    def add_token_for_sequence(self, newSequence: tuple):
+        if not(newSequence in self.compressVocab):
+            self.compressVocab[newSequence] = self.vocab_size()
             self.isDirty = True
 
-    def add_tokens(self, newTokens):
-        for newToken in newTokens:
-            self.add_token(newToken)
+    def add_tokens_for_sequences(self, newSequences):
+        for newSequence in newSequences:
+            self.add_token_for_sequence(newSequence)
 
     # def add_special_tokens(self, newTokens, specialTokensDict):
     #     pass
@@ -71,20 +71,71 @@ class BPE:
 
         return outTokenIDs
     
-    def train_from_iterator(self, tokensList, trainer: BPETrainer):
+    def get_most_frequent_pair(self, tokensList):
         pairToCount = {}
         for i in range(len(tokensList) - 1):
-            pair = (tokensList[i], tokensList[i+1])
-            if pair in pairToCount:
-                pairToCount[pair] += 1
+            newSequence:tuple = tokensList[i] + tokensList[i+1] 
+            if newSequence in pairToCount:
+                pairToCount[newSequence] += 1
             else:
-                pairToCount[pair] = 1
+                pairToCount[newSequence] = 1
 
         sortedMap = dict(sorted(pairToCount.items(), key=lambda item: item[1], reverse=True))
-        print(sortedMap)
-        print()
         it = iter(sortedMap.items())
-        key, value = next(it)
-        print("frequency: ", value / len(tokensList))
+        return next(it)
 
-        self.add_token(key)
+    # def sequence_to_token(self, sequence):
+    #     sorted(self.compressVocab, key=len)
+    #     for i in range(len(sequence)):
+    #         for vocab in self.compressVocab:
+    #             j = 0
+    #             while (j < len(vocab) and (i+j) < len(sequence) and sequence[i+j] == vocab[j]):
+    #                 j += 1
+
+    #             # if fits
+    #             if (j == len(vocab)):
+    #                 break
+
+    #             print(len(inTokens[0]))
+        
+    #     return inTokens
+
+    def sequence_to_vocabs(self, sequence):
+        sorted(self.compressVocab, key=len, reverse=True)
+        print(self.compressVocab)
+        for vocab in self.compressVocab:
+            print("vocab: ", vocab)
+            print("sequence length: ", len(sequence))
+            print(sequence)
+            for i in range(len(sequence)):
+                # print(i)
+                j = 0
+                while (j < len(vocab) and (i+j) < len(sequence) and sequence[i+j] == vocab[j]):
+                    j += 1
+
+                # if fits
+                if (j == len(vocab)):
+                    break
+
+                # print(sequence[:i])
+                # print(sequence[i+j:])
+                newSequence = sequence[:i-1]
+                newSequence.append(vocab)
+                newSequence.extend(sequence[i+j+1:])
+                sequence = newSequence
+
+
+                # print("fitting! ", vocab)
+                # sequence[i:i+j] = [vocab]
+        
+        return sequence
+
+
+    def train_from_iterator(self, sequence, trainer: BPETrainer):
+        inTokens = self.sequence_to_vocabs(sequence)
+        
+        key, value = self.get_most_frequent_pair(inTokens)
+        print("Fusing : ", key)
+        print("frequency: ", value / len(inTokens))
+
+        self.add_token_for_sequence(key)

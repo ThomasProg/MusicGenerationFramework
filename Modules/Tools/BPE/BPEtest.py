@@ -8,7 +8,8 @@ tok = BPE()
 #     # ord('a')
 #     tok.add_tokens(i)
 
-tok.add_tokens(range(0, 127))
+for i in range(0, 127):
+    tok.add_token_for_sequence((i,))
 
 print(tok.compressVocab)
 print("size : ", tok.vocab_size())
@@ -30,8 +31,10 @@ print(untokStr(tokStr("Hello world!")))
 corpus = ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua", 
           "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat"]
 
-sentence = list(corpus[0])
+tuples_list = [(char,) for char in corpus[0]]
+
+print("========= TRAINING =========")
 
 trainer = BPETrainer()
-tok.train_from_iterator(sentence, trainer)
+tok.train_from_iterator(tuples_list, trainer)
 
