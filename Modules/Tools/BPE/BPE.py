@@ -20,6 +20,7 @@ class BPETrainer:
 class BPE:
     # "a" -> 2
     compressVocab = {}
+    # 2 -> "a"
     uncompressVocab = {}
     isDirty = False
 
@@ -82,6 +83,7 @@ class BPE:
 
         sortedMap = dict(sorted(pairToCount.items(), key=lambda item: item[1], reverse=True))
         it = iter(sortedMap.items())
+        print(sortedMap)
         return next(it)
 
     # def sequence_to_token(self, sequence):
@@ -100,42 +102,84 @@ class BPE:
         
     #     return inTokens
 
+    # def sequence_to_vocabs(self, sequence):
+    #     sorted(self.compressVocab, key=len, reverse=True)
+    #     for vocab in self.compressVocab:
+    #         print("vocab: ", vocab)
+    #         print("sequence length: ", len(sequence))
+    #         print(sequence)
+    #         for i in range(len(sequence)):
+    #             # print(i)
+    #             j = 0
+    #             while (j < len(vocab) and (i+j) < len(sequence) and sequence[i+j] == vocab[j]):
+    #                 j += 1
+
+    #             # if fits
+    #             if (j != len(vocab)):
+    #                 break
+
+    #             # print(sequence[:i])
+    #             # print(sequence[i+j:])
+    #             newSequence = sequence[:i-1]
+    #             newSequence.append(vocab)
+    #             newSequence.extend(sequence[i+j+1:])
+    #             sequence = newSequence
+
+
+    #             # print("fitting! ", vocab)
+    #             # sequence[i:i+j] = [vocab]
+        
+    #     return sequence
+
+    @staticmethod
+    def replaceRange(list1, element, start, end):
+        newSequence = []
+
+        for k in range(0, start):
+            newSequence.append(list1[k])
+
+        newSequence.append(element)
+
+        for k in range(end, len(list1)):
+            newSequence.append(list1[k])
+
+        return newSequence
+    
+    @staticmethod
+    def replaceSubListToElem(list1, fromSubList, element):
+        for i in range(len(list1)):
+            j = 0
+            # print()
+            # print(list1[0][0])
+            # print(fromSubList[0])
+            while (j < len(fromSubList) and (i+j) < len(list1) and list1[i+j] == fromSubList[j]):
+                j += 1
+
+            # if fits
+            if (j != len(fromSubList)):
+                continue
+
+            # print("replacing")
+            list1 = BPE.replaceRange(list1, element, i, i+j+1)
+
+        return list1
+
     def sequence_to_vocabs(self, sequence):
         sorted(self.compressVocab, key=len, reverse=True)
-        print(self.compressVocab)
+
         for vocab in self.compressVocab:
-            print("vocab: ", vocab)
-            print("sequence length: ", len(sequence))
-            print(sequence)
-            for i in range(len(sequence)):
-                # print(i)
-                j = 0
-                while (j < len(vocab) and (i+j) < len(sequence) and sequence[i+j] == vocab[j]):
-                    j += 1
-
-                # if fits
-                if (j == len(vocab)):
-                    break
-
-                # print(sequence[:i])
-                # print(sequence[i+j:])
-                newSequence = sequence[:i-1]
-                newSequence.append(vocab)
-                newSequence.extend(sequence[i+j+1:])
-                sequence = newSequence
-
-
-                # print("fitting! ", vocab)
-                # sequence[i:i+j] = [vocab]
+            sequence = BPE.replaceSubListToElem(sequence, vocab, vocab)
         
         return sequence
 
 
     def train_from_iterator(self, sequence, trainer: BPETrainer):
+        print(sequence)
         inTokens = self.sequence_to_vocabs(sequence)
+        print(inTokens)
         
-        key, value = self.get_most_frequent_pair(inTokens)
-        print("Fusing : ", key)
-        print("frequency: ", value / len(inTokens))
+        # key, value = self.get_most_frequent_pair(inTokens)
+        # print("Fusing : ", key)
+        # print("frequency: ", value / len(inTokens))
 
-        self.add_token_for_sequence(key)
+        # self.add_token_for_sequence(key)
